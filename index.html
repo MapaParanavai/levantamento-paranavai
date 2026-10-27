@@ -383,6 +383,7 @@ async function abrirEnvio(){
     <p class="msg" id="eMsg">${podeTudo?"Abre o Outlook com a imagem e a planilha anexadas.":podeImg?"Este aparelho só compartilha a imagem. A planilha você salva e anexa.":"Compartilhar não está disponível aqui. Salve os arquivos e anexe no e-mail."}</p>
     <div class="row"><button class="btn" id="eAss">Copiar assunto</button><button class="btn" id="ePara">Copiar destinatários</button></div>
     <div class="row"><button class="btn" id="eX">Salvar planilha</button><button class="btn" id="eP">Salvar imagem</button></div>
+    <div class="row"><button class="btn" id="ePC">Enviar para o computador</button></div>
     <div class="grp">Imagem do resumo</div><img class="preview" src="${url}" alt="Resumo do dia ${fmt(f.d)}">
     <p class="msg">Planilha: ${esc(f.xlsx.name)} · ${(f.xlsx.size/1048576).toFixed(1)} MB</p>`;
   $("eShare").onclick=async()=>{
@@ -392,7 +393,7 @@ async function abrirEnvio(){
     catch(e){if(e.name!=="AbortError")toast("Não abriu o compartilhamento. Use Salvar.",false,true)}};
   $("eAss").onclick=()=>copiar(assunto(f.d),"Assunto copiado");
   $("ePara").onclick=()=>S.email.para?copiar(S.email.para,"Destinatários copiados"):toast("Cadastre os destinatários em Ajustes.",false,true);
-  $("eX").onclick=()=>salvar(f.xlsx);$("eP").onclick=()=>salvar(f.png);
+  $("eX").onclick=()=>salvar(f.xlsx);$("eP").onclick=()=>salvar(f.png);$("ePC").onclick=enviarParaPC;
 }
 $("btnEnviar").onclick=abrirEnvio;
 
@@ -401,7 +402,7 @@ function abrirAjustes(){
   openSheet("Ajustes",`
     <button class="item" id="aServ"><span>Serviços<br><small>Incluir, renomear, ordenar, desativar</small></span><small>${ativos().length} ativos</small></button>
     <button class="item" id="aMail"><span>E-mail<br><small>Destinatários e assunto padrão</small></span></button>
-    <button class="item" id="aBk"><span>Backup dos lançamentos<br><small>Salvar ou restaurar um arquivo de segurança</small></span></button>
+    <button class="item" id="aBk"><span>Transferir e backup<br><small>Enviar para o computador ou receber do celular</small></span></button>
     <p class="msg">Os lançamentos ficam salvos neste aparelho. A planilha enviada todo dia e o backup protegem contra perda do celular.</p>`);
   $("aServ").onclick=abrirServEditor;$("aMail").onclick=abrirMail;$("aBk").onclick=abrirBackup;
 }
@@ -448,13 +449,35 @@ function editarServ(id){
     if(!s.ativo&&S.atual===s.id)S.atual=ativos()[0]?.id;
     save();paint();abrirServEditor();toast("Serviço salvo")};
 }
+// ---------- transferência celular -> computador (arquivo de backup) ----------
+function arquivoTransf(){const n=S.servicos.reduce((a,s)=>a+Object.keys(marksOf(s.id)).length,0);
+  return new File([JSON.stringify({...S,_geradoEm:new Date().toISOString(),_lanc:n})],`levantamento_${dia()}.txt`,{type:"text/plain"})}
+async function enviarParaPC(){
+  const f=arquivoTransf();
+  if(navigator.canShare&&navigator.canShare({files:[f]})){
+    try{await navigator.share({files:[f],title:"Levantamento "+fmt(dia())});return}catch(e){if(e.name==="AbortError")return}
+  }
+  await salvar(f);toast("Arquivo salvo em Downloads. Envie para você por e-mail ou WhatsApp.");
+}
 function abrirBackup(){
-  openSheet("Backup",`<p class="msg">Salva todos os lançamentos e a lista de serviços num arquivo. Guarde no e-mail ou no computador.</p>
-  <div class="row"><button class="btn pri" id="bS">Salvar backup</button></div>
-  <label class="f">Restaurar de um arquivo de backup<input type="file" id="bR" accept=".json,application/json"></label><p class="msg" id="bMsg"></p>`);
-  $("bS").onclick=()=>salvar(new File([JSON.stringify(S)],`backup_levantamento_${dia()}.json`,{type:"application/json"}));
-  $("bR").onchange=async e=>{const f=e.target.files[0];if(!f)return;try{const s=JSON.parse(await f.text());if(!s.servicos||!s.marks)throw 0;
-      S=Object.assign(S,s);save();paint();$("bMsg").textContent="Backup restaurado."}catch(_){$("bMsg").textContent="Arquivo inválido.";$("bMsg").classList.add("err")}};
+  openSheet("Transferir e backup",`
+  <div class="grp">No celular</div>
+  <button class="btn pri" id="bS">Enviar para o computador</button>
+  <p class="msg">Gera um arquivo com todos os lançamentos e abre o compartilhamento. Mande para você mesma por e-mail ou WhatsApp. Também serve de backup.</p>
+  <div class="grp">No computador</div>
+  <label class="f">Receber do celular: escolha o arquivo levantamento_….txt<input type="file" id="bR" accept=".txt,.json,text/plain,application/json"></label>
+  <div id="bConf"></div><p class="msg" id="bMsg"></p>`);
+  $("bS").onclick=enviarParaPC;
+  $("bR").onchange=async e=>{const f=e.target.files[0];$("bConf").innerHTML="";$("bMsg").textContent="";$("bMsg").classList.remove("err");if(!f)return;
+    let s;try{s=JSON.parse(await f.text());if(!s.servicos||!s.marks)throw 0}catch(_){$("bMsg").textContent="Arquivo inválido. Use o arquivo gerado em Enviar para o computador.";$("bMsg").classList.add("err");return}
+    const n=s._lanc??s.servicos.reduce((a,x)=>a+Object.keys(s.marks[x.id]||{}).length,0);
+    const quando=s._geradoEm?new Date(s._geradoEm).toLocaleString("pt-BR",{dateStyle:"short",timeStyle:"short"}):"data desconhecida";
+    $("bConf").innerHTML=`<p class="msg">Arquivo gerado em <b>${quando}</b> com <b>${n}</b> lançamentos. Os dados deste aparelho serão substituídos por ele.</p>
+      <div class="row"><button class="btn" id="bNo">Cancelar</button><button class="btn pri" id="bOk">Substituir dados</button></div>`;
+    $("bNo").onclick=()=>{$("bConf").innerHTML="";e.target.value=""};
+    $("bOk").onclick=()=>{delete s._geradoEm;delete s._lanc;S=Object.assign(S,s);if(!svcById(S.atual))S.atual=ativos()[0]?.id;save();paint();
+      $("bConf").innerHTML="";$("bMsg").textContent=`Dados recebidos: ${n} lançamentos. Agora é só usar Enviar.`};
+  };
 }
 
 // ---------- início ----------
