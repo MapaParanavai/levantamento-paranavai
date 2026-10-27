@@ -414,21 +414,22 @@ async function abrirEnvio(){
   openSheet("Enviar levantamento",`<p class="msg" id="st">Gerando planilha e imagem do resumo…</p>`);
   try{ultimo=await gerarArquivos()}catch(e){$("st").textContent="Erro ao gerar: "+(e.message||e);$("st").classList.add("err");return}
   const f=ultimo, url=URL.createObjectURL(f.png);
-  const podeTudo=navigator.canShare&&navigator.canShare({files:[f.png,f.xlsx]});
-  const podeImg=navigator.canShare&&navigator.canShare({files:[f.png]});
+  const podeImg=!!(navigator.canShare&&navigator.canShare({files:[f.png]}));
   $("sheetB").innerHTML=`
-    <div class="row"><button class="btn pri" id="eShare">Compartilhar no Outlook</button></div>
-    <p class="msg" id="eMsg">${podeTudo?"Abre o Outlook com a imagem e a planilha anexadas.":podeImg?"Este aparelho só compartilha a imagem. A planilha você salva e anexa.":"Compartilhar não está disponível aqui. Salve os arquivos e anexe no e-mail."}</p>
+    <div class="row"><button class="btn pri" id="eShare">Enviar pelo Outlook</button></div>
+    <p class="msg" id="eMsg">${podeImg?"Abre o compartilhamento com a imagem do resumo. A planilha é salva em Downloads ao mesmo tempo: no Outlook, toque no clipe e anexe da pasta Downloads.":"Compartilhar não está disponível aqui. Use Salvar planilha e Salvar imagem e anexe no e-mail."}</p>
     <div class="row"><button class="btn" id="eAss">Copiar assunto</button><button class="btn" id="ePara">Copiar destinatários</button></div>
     <div class="row"><button class="btn" id="eX">Salvar planilha</button><button class="btn" id="eP">Salvar imagem</button></div>
     <div class="row"><button class="btn" id="ePC">Enviar para o computador</button></div>
     <div class="grp">Imagem do resumo</div><img class="preview" src="${url}" alt="Resumo do dia ${fmt(f.d)}">
     <p class="msg">Planilha: ${esc(f.xlsx.name)} · ${(f.xlsx.size/1048576).toFixed(1)} MB</p>`;
   $("eShare").onclick=async()=>{
-    const files=podeTudo?[f.png,f.xlsx]:podeImg?[f.png]:null;
-    if(!files){toast("Compartilhar indisponível. Use Salvar.",false,true);return}
-    try{await navigator.share({files,title:assunto(f.d),text:assunto(f.d)});if(!podeTudo)toast("Agora anexe a planilha salva.",false,true)}
-    catch(e){if(e.name!=="AbortError")toast("Não abriu o compartilhamento. Use Salvar.",false,true)}};
+    if(!podeImg){toast("Compartilhar indisponível. Use Salvar.",false,true);return}
+    let ok=false;
+    try{await navigator.share({files:[f.png],text:assunto(f.d)});ok=true}
+    catch(e){if(e.name==="AbortError")return;$("eMsg").textContent=`Não abriu o compartilhamento (${e.name}). Use Salvar imagem e Salvar planilha e anexe no Outlook.`;$("eMsg").classList.add("err")}
+    if(ok){await salvar(f.xlsx);toast("Planilha salva em Downloads. Anexe no Outlook pelo clipe.")}
+  };
   $("eAss").onclick=()=>copiar(assunto(f.d),"Assunto copiado");
   $("ePara").onclick=()=>S.email.para?copiar(S.email.para,"Destinatários copiados"):toast("Cadastre os destinatários em Ajustes.",false,true);
   $("eX").onclick=()=>salvar(f.xlsx);$("eP").onclick=()=>salvar(f.png);$("ePC").onclick=enviarParaPC;
