@@ -1,5 +1,5 @@
 // Guarda o app no celular para funcionar sem internet.
-const V='levprod-v3';
+const V='levprod-v4';
 const ARQ=['./','index.html','export.js','jszip.min.js','mapa.json','mapa_dwg.json','modelo.js','manifest.webmanifest','icon-192.png','icon-512.png'];
 self.addEventListener('install',e=>{e.waitUntil(caches.open(V).then(c=>c.addAll(ARQ)).then(()=>self.skipWaiting()))});
 self.addEventListener('activate',e=>{e.waitUntil(caches.keys().then(k=>Promise.all(k.filter(x=>x!==V).map(x=>caches.delete(x)))).then(()=>self.clients.claim()))});
