@@ -1,0 +1,475 @@
+<!doctype html><html lang="pt-BR"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><title>Levantamento Paranavaí</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<meta name="theme-color" content="#1f3864">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icon-192.png">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow:wght@400;500;600&family=Barlow+Condensed:wght@500;600;700&display=swap">
+<style>
+/* Layout: app de uma tela — barra superior (serviço + data), mapa da obra com zoom ocupando o meio, barra inferior de ações. Folhas deslizantes para serviços, resumo e envio. */
+:root{
+  --bg:#eef1f4; --surface:#ffffff; --ink:#18202b; --muted:#5d6878; --line:#cfd6df;
+  --navy:#1f3864; --blue:#2f5597; --lab:#d6e4f5; --pne:#f1e2f8; --done:#a9d8b8; --today:#2e7d4f; --today-ink:#fff;
+  --warn:#c4691a; --com:#f6c6cc; --semuh:#f2e27d;
+  --f-display:"Barlow Condensed","Arial Narrow",system-ui,sans-serif;
+  --f-body:"Barlow",system-ui,-apple-system,"Segoe UI",sans-serif;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){--bg:#11161d;--surface:#1a212b;--ink:#e6ebf1;--muted:#98a4b3;--line:#2e3846;--navy:#8fb0e6;--blue:#7ea6e8;color-scheme:dark}}
+:root[data-theme="dark"]{--bg:#11161d;--surface:#1a212b;--ink:#e6ebf1;--muted:#98a4b3;--line:#2e3846;--navy:#8fb0e6;--blue:#7ea6e8;color-scheme:dark}
+[hidden]{display:none!important}
+*{box-sizing:border-box}
+html,body{margin:0;height:100%;background:var(--bg);color:var(--ink)}
+body{font-family:var(--f-body);font-size:15px;line-height:1.35;display:flex;flex-direction:column;overflow:hidden;
+  padding-left:max(0px,env(safe-area-inset-left,0px));padding-right:max(0px,env(safe-area-inset-right,0px))}
+button{font:inherit;color:inherit}
+:focus-visible{outline:2px solid var(--blue);outline-offset:2px}
+header{background:var(--surface);border-bottom:1px solid var(--line);padding-block:8px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));display:grid;gap:6px}
+.l1{display:flex;align-items:center;gap:8px;justify-content:space-between}
+.obra{font-family:var(--f-display);font-weight:700;font-size:13px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+input[type=date]{font:500 14px var(--f-body);padding:5px 6px;border:1px solid var(--line);border-radius:6px;background:var(--surface);color:var(--ink)}
+.svc{display:flex;align-items:center;justify-content:space-between;gap:10px;width:100%;text-align:left;border:1px solid var(--line);border-radius:8px;background:var(--bg);padding:8px 10px;cursor:pointer}
+.svc b{font-family:var(--f-display);font-size:20px;font-weight:700;line-height:1.1;display:block}
+.svc small{color:var(--muted);font-size:12px}
+.svc .num{font-family:var(--f-display);font-size:18px;font-weight:600;font-variant-numeric:tabular-nums;white-space:nowrap}
+.svc .num em{font-style:normal;color:var(--today)}
+#mapwrap{flex:1;position:relative;overflow:hidden;touch-action:none;background:var(--bg)}
+#map{position:absolute;inset:0;width:100%;height:100%}
+.zoom{position:absolute;right:calc(10px + env(safe-area-inset-right,0px));top:10px;display:grid;gap:6px}
+.zoom button{width:40px;height:40px;border-radius:8px;border:1px solid var(--line);background:var(--surface);font-size:20px;cursor:pointer;box-shadow:0 1px 3px #0002}
+.hint{position:absolute;left:12px;bottom:10px;right:64px;font-size:12px;color:var(--muted);pointer-events:none}
+nav.bar{display:flex;gap:6px;background:var(--surface);border-top:1px solid var(--line);
+  padding:8px max(12px,env(safe-area-inset-right,0px)) calc(8px + env(safe-area-inset-bottom,0px)) max(12px,env(safe-area-inset-left,0px))}
+nav.bar button{flex:1;border:1px solid var(--line);border-radius:8px;background:var(--surface);padding:10px 4px;font:600 15px var(--f-display);cursor:pointer}
+nav.bar button.pri{background:var(--navy);border-color:var(--navy);color:#fff}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]) nav.bar button.pri{color:#0d1420}}
+:root[data-theme="dark"] nav.bar button.pri{color:#0d1420}
+.toast{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(70px + env(safe-area-inset-bottom,0px));z-index:30;background:var(--ink);color:var(--bg);
+  border-radius:8px;padding:10px 12px;font-size:14px;display:flex;gap:12px;align-items:center;width:max-content;max-width:calc(100% - 32px)}
+.toast.warn{background:var(--warn);color:#fff}
+.toast button{background:none;border:0;font-weight:600;color:inherit;text-decoration:underline;cursor:pointer;padding:4px}
+.sheet{position:fixed;inset:0;z-index:20;background:#0006;display:flex;align-items:flex-end}
+.sheet>div{background:var(--surface);width:100%;max-height:88%;border-radius:14px 14px 0 0;display:flex;flex-direction:column;
+  padding-bottom:env(safe-area-inset-bottom,0px)}
+.sh{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:14px max(16px,env(safe-area-inset-right,0px)) 8px max(16px,env(safe-area-inset-left,0px));border-bottom:1px solid var(--line)}
+.sh h2{font-family:var(--f-display);font-size:22px;margin:0}
+.sh button{border:0;background:none;font-size:15px;color:var(--blue);font-weight:600;cursor:pointer;padding:6px}
+.sb{overflow:auto;padding:10px max(16px,env(safe-area-inset-right,0px)) 16px max(16px,env(safe-area-inset-left,0px));display:grid;gap:10px}
+.search{font:inherit;width:100%;padding:9px 10px;border:1px solid var(--line);border-radius:8px;background:var(--bg);color:var(--ink)}
+.grp{font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);margin-top:4px}
+.item{display:flex;justify-content:space-between;align-items:center;gap:8px;padding:9px 10px;border:1px solid var(--line);border-radius:8px;background:var(--surface);cursor:pointer;text-align:left;width:100%}
+.item.sel{border-color:var(--navy);box-shadow:inset 3px 0 0 var(--navy)}
+.item span:first-child{min-width:0}
+.item small{color:var(--muted);font-variant-numeric:tabular-nums;white-space:nowrap}
+.item .n{color:var(--muted);font-variant-numeric:tabular-nums;font-size:12px;margin-right:4px}
+table.res{border-collapse:collapse;font-size:13px;font-variant-numeric:tabular-nums;width:100%;min-width:520px}
+table.res th{background:var(--navy);color:#fff;font-weight:600;font-size:11px;padding:6px 4px;text-align:center}
+table.res td{border-bottom:1px solid var(--line);padding:5px 4px;text-align:center}
+table.res td:nth-child(2){text-align:left}
+table.res tr.hoje td{background:color-mix(in srgb,var(--today) 14%,transparent)}
+.scroll{overflow-x:auto}
+.kpis{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
+.kpi{border:1px solid var(--line);border-radius:8px;padding:8px}
+.kpi b{display:block;font:700 22px var(--f-display);font-variant-numeric:tabular-nums}
+.kpi span{font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.05em}
+.btn{border:1px solid var(--line);border-radius:8px;background:var(--surface);padding:10px 12px;font:600 16px var(--f-display);cursor:pointer}
+.btn.pri{background:var(--navy);color:#fff;border-color:var(--navy)}
+.row{display:flex;gap:8px;flex-wrap:wrap}
+.row>.btn{flex:1}
+label.f{display:grid;gap:4px;font-size:12px;color:var(--muted)}
+label.f input,label.f select,label.f textarea{font:15px var(--f-body);padding:8px;border:1px solid var(--line);border-radius:8px;background:var(--bg);color:var(--ink)}
+.msg{font-size:13px;color:var(--muted)}
+.msg.err{color:var(--warn)}
+.ed{display:grid;grid-template-columns:auto minmax(0,1fr) auto;gap:8px;align-items:center;padding:8px;border:1px solid var(--line);border-radius:8px}
+.ed.off{opacity:.5}
+.ed .mv{display:grid;gap:2px}
+.ed .mv button{border:1px solid var(--line);background:var(--surface);border-radius:4px;width:28px;height:22px;cursor:pointer;font-size:12px}
+.ed b{font-weight:600;display:block;overflow-wrap:anywhere}
+.ed small{color:var(--muted);font-size:12px}
+.ed .acts button{border:0;background:none;color:var(--blue);font-weight:600;cursor:pointer;padding:6px}
+img.preview{width:100%;border:1px solid var(--line);border-radius:6px}
+</style></head><body>
+
+<header>
+  <div class="l1">
+    <span class="obra" id="obra">Paranavaí · Fase 1</span>
+    <input type="date" id="dia" aria-label="Data do levantamento">
+  </div>
+  <button class="svc" id="btnSvc" aria-haspopup="dialog">
+    <span><small id="svcNum">Serviço</small><b id="svcNome">—</b></span>
+    <span class="num" id="svcCont"></span>
+  </button>
+</header>
+
+<div id="mapwrap">
+  <svg id="map" role="application" aria-label="Mapa da obra"><g id="vp"></g></svg>
+  <div class="zoom">
+    <button id="zin" aria-label="Aproximar">+</button>
+    <button id="zout" aria-label="Afastar">−</button>
+    <button id="zfit" aria-label="Ver obra inteira" style="font-size:13px">⤢</button>
+  </div>
+  <div class="hint" id="hint">Arraste para navegar e use a pinça para zoom. Toque no lote para lançar. Deitar o celular mostra mais quadras.</div>
+</div>
+
+<nav class="bar">
+  <button id="btnResumo">Resumo</button>
+  <button id="btnEnviar" class="pri">Enviar</button>
+  <button id="btnMais">Ajustes</button>
+</nav>
+
+<div class="toast" id="toast" hidden><span id="toastTxt"></span><button id="toastUndo">Desfazer</button></div>
+<div class="sheet" id="sheet" hidden><div role="dialog" aria-modal="true" aria-labelledby="sheetT"><div class="sh"><h2 id="sheetT"></h2><button id="sheetX">Fechar</button></div><div class="sb" id="sheetB"></div></div></div>
+
+<script src="jszip.min.js"></script>
+<script src="export.js"></script>
+<script src="modelo.js"></script>
+<script>
+"use strict";
+const $=id=>document.getElementById(id);
+const KEY="levprod-paranavai-f1";
+let MAPA=null, LOTS=[], LOTIDX={};
+let S={servicos:[],marks:{},atual:null,email:{para:"",assunto:"Produção diária · Paranavaí Fase 1 · {data}"},updatedAt:0};
+// S.marks[svcId][lotId]="AAAA-MM-DD"
+
+const hoje=()=>{const d=new Date();d.setMinutes(d.getMinutes()-d.getTimezoneOffset());return d.toISOString().slice(0,10)};
+const fmt=s=>s?s.slice(8,10)+"/"+s.slice(5,7)+"/"+s.slice(0,4):"";
+const fmtC=s=>s?s.slice(8,10)+"/"+s.slice(5,7):"";
+const dia=()=>$("dia").value||hoje();
+function save(){S.updatedAt=Date.now();try{localStorage.setItem(KEY,JSON.stringify(S))}catch(e){toast("Não consegui salvar no aparelho. Exporte um backup em Ajustes.",false,true)}}
+function load(){try{const r=localStorage.getItem(KEY);if(r){const s=JSON.parse(r);if(s&&s.servicos)S=Object.assign(S,s)}}catch(e){}}
+const svcById=id=>S.servicos.find(s=>s.id===id);
+const ativos=()=>S.servicos.filter(s=>s.ativo);
+const marksOf=id=>S.marks[id]||(S.marks[id]={});
+
+// ---------- mapa ----------
+const PX=7, PT=1.333; let X=[0],Y=[0];
+const svgNS="http://www.w3.org/2000/svg";
+let view={s:1,tx:0,ty:0}, W=0,H=0, lotEls={}, LW=[], LOTW=30;
+function el(t,a,p){const e=document.createElementNS(svgNS,t);for(const k in a)e.setAttribute(k,a[k]);if(p)p.appendChild(e);return e}
+// rodapé das quadras: só "QUADRA XX" e "TOTAL"; nome da quadra com fonte maior
+function rodapes(cells){
+  const at=(r,c)=>cells.find(x=>x.r===r&&x.c===c);
+  const fora=new Set(), novos=[];
+  for(const q of cells){
+    if(!q.t||!/^QUADRA \d+$/.test(q.t))continue;
+    const linha=cells.filter(x=>x.r===q.r&&x.c>q.c&&x.c<q.c+60).sort((a,b)=>a.c-b.c);
+    const tl=linha.find(x=>x.t==="TOTAL"), cl=linha.find(x=>x.t&&/^CONC/.test(x.t));
+    if(tl&&cl){ // tudo numa linha: redistribui em duas partes
+      const tv=at(q.r,tl.c+tl.cs), cv=at(q.r,cl.c+cl.cs);
+      const fim=(cv?cv.c+cv.cs:cl.c+cl.cs), n=fim-q.c;
+      const meio=Math.round(n*.58), nl=Math.max(1,Math.round((n-meio)*.55));
+      [q,tl,tv,cl,cv].forEach(x=>x&&fora.add(x));
+      novos.push({...q,cs:meio,qd:1,ext:1},{...tl,c:q.c+meio,cs:nl,tot:1,ext:1},{...(tv||{f:"FFFFFF",fc:"0000FF"}),r:q.r,rs:q.rs,c:q.c+meio+nl,cs:n-meio-nl,tot:1,ext:1,t:tv?tv.t:""});
+    }else{
+      novos.push({...q,qd:1});fora.add(q);
+      // conclusão em linha separada (quadras em pé): remove essa linha do rodapé
+      for(let r=q.r+1;r<=q.r+3;r++){const c2=cells.find(x=>x.r===r&&x.t&&/^CONC/.test(x.t)&&Math.abs(x.c-q.c)<3);
+        if(c2){fora.add(c2);const v=at(r,c2.c+c2.cs);if(v)fora.add(v);}
+        const t2=cells.find(x=>x.r===r&&x.t==="TOTAL"&&Math.abs(x.c-q.c)<3);if(t2){fora.add(t2);novos.push({...t2,tot:1});const v=at(r,t2.c+t2.cs);if(v){fora.add(v);novos.push({...v,tot:1})}}}
+    }
+  }
+  return cells.filter(x=>!fora.has(x)).concat(novos);
+}
+function buildMap(){
+  X=[0];MAPA.w.forEach((w,i)=>X.push(X[i]+w*PX));
+  Y=[0];MAPA.h.forEach((h,i)=>Y.push(Y[i]+h*PT));
+  const vp=$("vp");vp.innerHTML="";
+  const ox=X[0],oy=Y[MAPA.r0-1];
+  W=X[X.length-1];H=Y[MAPA.r1]-oy;
+  el("rect",{x:0,y:0,width:W,height:H,fill:"#ffffff"},vp);
+  const gCells=el("g",{},vp), gTxt=el("g",{"font-family":"Barlow Condensed, Arial Narrow, sans-serif","text-anchor":"middle","dominant-baseline":"central"},vp);
+  lotEls={};LW=[];
+  for(const c of rodapes(MAPA.cells)){
+    const x=X[c.c-1]-ox, y=Y[c.r-1]-oy, w=X[c.c-1+c.cs]-X[c.c-1], h=(Y[c.r-1+c.rs]-Y[c.r-1])*(c.ext?1.45:1);
+    let fill=c.f?"#"+c.f:"none";
+    if(c.tot&&c.t!=="TOTAL")fill="#1F3864";
+    const borda=c.lot||c.t;
+    const r=el("rect",borda?{x:x+.5,y:y+.5,width:Math.max(0,w-1),height:Math.max(0,h-1),fill,stroke:"#9fb0c6","stroke-width":.6}:{x,y,width:w,height:h,fill},gCells);
+    if(c.lot){
+      const L=lotEls[c.lot]||(lotEls[c.lot]={});L[c.k]=r;r.dataset.lot=c.lot;
+      if(c.k==="inp"){L.x=x;L.y=y;L.w=w;L.h=h;
+        L.t=el("text",{x:x+w/2,y:y+h/2,"font-size":Math.min(9,h*.6),fill:"#123"},gTxt);
+        L.wn=el("circle",{cx:x+w-3,cy:y+3,r:2.6,fill:"#c4691a",visibility:"hidden"},gTxt);
+        L.t.dataset.lot=c.lot;L.wn.dataset.lot=c.lot;LW.push(w);}
+    }
+    if(c.t&&!(c.lot&&c.k==="inp")){
+      const big=c.t.length>3||/QUADRA|TOTAL|CONC/.test(c.t);
+      let fs=Math.min(big?8:9,h*.62);
+      if(c.qd)fs=Math.min(h*.78,w/(c.t.length*.56),18);
+      else if(c.tot)fs=Math.min(h*.72,12);
+      const valTot=c.tot&&c.t!=="TOTAL";
+      const t=el("text",{x:x+w/2,y:y+h/2,"font-size":fs,fill:valTot?"#FFFFFF":"#"+(c.fc||"1F3864"),"font-weight":big||valTot?700:500},gTxt);
+      t.textContent=c.t.length>40?c.t.slice(0,40)+"…":c.t;
+      if(c.lot)t.dataset.lot=c.lot;
+    }
+  }
+  LW.sort((a,b)=>a-b);LOTW=LW[LW.length>>1]||30;
+}
+function paint(){
+  const s=svcById(S.atual);if(!s)return;
+  const mk=marksOf(s.id), ant=s.ant?S.servicos.find(x=>x.num===s.ant):null, amk=ant?marksOf(ant.id):null, d=dia();
+  for(const l of LOTS){
+    const L=lotEls[l.id];if(!L||!L.inp)continue;
+    const v=mk[l.id];
+    L.inp.setAttribute("fill",v?(v===d?"#2e7d4f":"#a9d8b8"):(l.pne?"#f1e2f8":"#ffffff"));
+    L.t.textContent=v?fmtC(v):"";L.t.setAttribute("fill",v===d?"#fff":"#123");
+    L.wn.setAttribute("visibility",v&&amk&&!amk[l.id]?"visible":"hidden");
+  }
+  const tot=Object.keys(mk).length, nd=Object.values(mk).filter(x=>x===d).length;
+  $("svcNum").textContent=`Serviço ${s.num}`+(ant?` · antecessora: ${ant.nome}`:"");
+  $("svcNome").textContent=s.nome;
+  $("svcCont").innerHTML=`${tot}/${LOTS.length}`+(nd?` <em>+${nd}</em>`:"");
+}
+function applyView(){$("vp").setAttribute("transform",`translate(${view.tx},${view.ty}) scale(${view.s})`)}
+function fitAlto(){const r=$("map").getBoundingClientRect();const s=Math.min(r.height/H,Math.max(r.width/W,r.height/H));view={s,tx:W*s>r.width?8:(r.width-W*s)/2,ty:(r.height-H*s)/2};applyView()}
+function fit(){const r=$("map").getBoundingClientRect();const s=Math.min(r.width/W,r.height/H)*.98;view={s,tx:(r.width-W*s)/2,ty:(r.height-H*s)/2};applyView()}
+function zoomAt(f,cx,cy){const ns=Math.max(fitScale()*.8,Math.min(view.s*f,8));view.tx=cx-(cx-view.tx)*ns/view.s;view.ty=cy-(cy-view.ty)*ns/view.s;view.s=ns;applyView()}
+function fitScale(){const r=$("map").getBoundingClientRect();return Math.min(r.width/W,r.height/H)}
+function center(){const r=$("map").getBoundingClientRect();return[r.width/2,r.height/2]}
+$("zin").onclick=()=>zoomAt(1.6,...center());$("zout").onclick=()=>zoomAt(1/1.6,...center());$("zfit").onclick=fit;
+
+// gestos: arrastar, pinça, toque
+const ptrs=new Map();let pinch=null,moved=0,downAt=null;
+const mapEl=$("map");
+mapEl.addEventListener("pointerdown",e=>{$("hint").hidden=true;mapEl.setPointerCapture(e.pointerId);ptrs.set(e.pointerId,{x:e.clientX,y:e.clientY});moved=0;downAt={x:e.clientX,y:e.clientY,t:e.target};
+  if(ptrs.size===2){const[a,b]=[...ptrs.values()];pinch={d:Math.hypot(a.x-b.x,a.y-b.y)}}});
+mapEl.addEventListener("pointermove",e=>{const p=ptrs.get(e.pointerId);if(!p)return;const r=mapEl.getBoundingClientRect();
+  if(ptrs.size===2&&pinch){ptrs.set(e.pointerId,{x:e.clientX,y:e.clientY});const[a,b]=[...ptrs.values()];const d=Math.hypot(a.x-b.x,a.y-b.y);
+    zoomAt(d/pinch.d,(a.x+b.x)/2-r.left,(a.y+b.y)/2-r.top);pinch.d=d;moved=99;return}
+  const dx=e.clientX-p.x,dy=e.clientY-p.y;moved+=Math.abs(dx)+Math.abs(dy);if(moved>8){view.tx+=dx;view.ty+=dy;applyView()}ptrs.set(e.pointerId,{x:e.clientX,y:e.clientY})});
+const up=e=>{const was=ptrs.has(e.pointerId);ptrs.delete(e.pointerId);if(ptrs.size<2)pinch=null;
+  if(was&&ptrs.size===0&&moved<=8&&downAt)tap(downAt);downAt=null};
+mapEl.addEventListener("pointerup",up);mapEl.addEventListener("pointercancel",e=>{ptrs.delete(e.pointerId);pinch=null;downAt=null});
+mapEl.addEventListener("wheel",e=>{e.preventDefault();const r=mapEl.getBoundingClientRect();zoomAt(e.deltaY<0?1.15:1/1.15,e.clientX-r.left,e.clientY-r.top)},{passive:false});
+function tap(p){
+  const r=mapEl.getBoundingClientRect();
+  const cellPx=LOTW*view.s; // largura típica do quadrado de lote na tela
+  const lot=p.t&&p.t.dataset?p.t.dataset.lot:null;
+  if(cellPx<26){zoomAt(Math.min(5,40/cellPx),p.x-r.left,p.y-r.top);return}
+  if(lot)toggle(lot);
+}
+
+// ---------- lançamento ----------
+let undo=null,tt=null;
+function toggle(lotId){
+  const s=svcById(S.atual),mk=marksOf(s.id),d=dia(),antes=mk[lotId],l=LOTIDX[lotId];
+  if(antes)delete mk[lotId];else mk[lotId]=d;
+  save();paint();
+  const ant=s.ant?S.servicos.find(x=>x.num===s.ant):null;
+  const falta=!antes&&ant&&!marksOf(ant.id)[lotId];
+  undo=()=>{if(antes)mk[lotId]=antes;else delete mk[lotId];save();paint()};
+  const nome=`${l.q} · lote ${l.n}`+(l.pne?" (PNE)":"");
+  toast(antes?`${nome}: desmarcado (era ${fmtC(antes)})`:`${nome}: ${s.nome} em ${fmtC(d)}`+(falta?` · sem ${ant.nome}!`:""),true,falta);
+}
+function toast(t,canUndo,warn){$("toastTxt").textContent=t;$("toastUndo").hidden=!canUndo;const T=$("toast");T.classList.toggle("warn",!!warn);T.hidden=false;clearTimeout(tt);tt=setTimeout(()=>T.hidden=true,warn?6000:3500)}
+$("toastUndo").onclick=()=>{if(undo){undo();undo=null}$("toast").hidden=true};
+$("dia").onchange=()=>paint();
+
+// ---------- folhas ----------
+function openSheet(t,html){$("toast").hidden=true;$("sheetT").textContent=t;$("sheetB").innerHTML=html;$("sheet").hidden=false}
+function closeSheet(){$("sheet").hidden=true}
+$("sheetX").onclick=closeSheet;$("sheet").onclick=e=>{if(e.target.id==="sheet")closeSheet()};
+const esc=s=>String(s??"").replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+
+// escolher serviço
+function recentes(){const lim=new Date(dia());lim.setDate(lim.getDate()-7);const l=lim.toISOString().slice(0,10);
+  return ativos().filter(s=>Object.values(marksOf(s.id)).some(v=>v>=l))}
+function abrirServicos(){
+  openSheet("Escolher serviço",`<input class="search" id="q" placeholder="Buscar serviço" autocomplete="off"><div id="lst" style="display:grid;gap:6px"></div>`);
+  const draw=()=>{const q=$("q").value.trim().toLowerCase();const it=s=>{const n=Object.keys(marksOf(s.id)).length;
+      return `<button class="item${s.id===S.atual?" sel":""}" data-id="${s.id}"><span><span class="n">${s.num}</span>${esc(s.nome)}</span><small>${n}/${LOTS.length}</small></button>`};
+    let h="";
+    if(!q){const r=recentes();if(r.length)h+=`<div class="grp">Em andamento (últimos 7 dias)</div>`+r.map(it).join("");h+=`<div class="grp">Todos</div>`}
+    h+=ativos().filter(s=>!q||s.nome.toLowerCase().includes(q)||String(s.num)===q||s.aba.toLowerCase().includes(q)).map(it).join("")||`<p class="msg">Nenhum serviço encontrado.</p>`;
+    $("lst").innerHTML=h;
+    $("lst").querySelectorAll("button").forEach(b=>b.onclick=()=>{S.atual=b.dataset.id;save();paint();closeSheet()});};
+  $("q").oninput=draw;draw();
+}
+$("btnSvc").onclick=abrirServicos;
+
+// ---------- resumo (mesma lógica da CAPA) ----------
+function uteis(a,b){let n=0;const d=new Date(a+"T12:00");const e=new Date(b+"T12:00");while(d<=e){const w=d.getDay();if(w&&w<6)n++;d.setDate(d.getDate()+1)}return n}
+function calc(d){
+  const ini=d.slice(0,8)+"01";const fim=new Date(+d.slice(0,4),+d.slice(5,7),0);const fimS=`${d.slice(0,8)}${String(fim.getDate()).padStart(2,"0")}`;
+  const tot=LOTS.length, du=Math.max(1,uteis(ini,d));
+  const linhas=ativos().map(s=>{const v=Object.values(marksOf(s.id));const acum=v.length;
+    const mes=v.filter(x=>x>=ini&&x<=fimS).length;return{s,dia:v.filter(x=>x===d).length,acum,pct:tot?acum/tot:0,mes,falta:tot-acum,media:Math.round(mes/du*10)/10}});
+  linhas.forEach(L=>{const a=L.s.ant?linhas.find(x=>x.s.num===L.s.ant):null;L.frente=a?Math.max(0,a.acum-L.acum):null});
+  return{linhas,tot,ini,fimS,uteisMes:uteis(ini,fimS),restantes:Math.max(0,uteis(d,fimS)-1)};
+}
+function abrirResumo(){
+  const d=dia(),C=calc(d);const comProd=C.linhas.filter(l=>l.dia).length;const casasDia=C.linhas.reduce((a,l)=>a+l.dia,0);
+  openSheet(`Resumo · ${fmt(d)}`,`
+  <div class="kpis"><div class="kpi"><b>${comProd}</b><span>serviços com produção</span></div><div class="kpi"><b>${casasDia}</b><span>lançamentos no dia</span></div><div class="kpi"><b>${C.restantes}</b><span>dias úteis restantes</span></div></div>
+  <div class="scroll"><table class="res"><thead><tr><th>Nº</th><th>Serviço</th><th>Dia</th><th>Acum.</th><th>%</th><th>Mês</th><th>A realizar</th><th>Frentes</th><th>Média</th></tr></thead><tbody>
+  ${C.linhas.map(l=>`<tr class="${l.dia?"hoje":""}"><td>${l.s.num}</td><td>${esc(l.s.nome)}</td><td>${l.dia}</td><td>${l.acum}</td><td>${(l.pct*100).toFixed(1)}%</td><td>${l.mes}</td><td>${l.falta}</td><td>${l.frente??"-"}</td><td>${l.media}</td></tr>`).join("")}
+  </tbody></table></div>
+  <p class="msg">Mesmos cálculos da CAPA. A planilha enviada recalcula tudo no Excel.</p>`);
+}
+$("btnResumo").onclick=abrirResumo;
+
+// ---------- imagem da CAPA ----------
+function imagemCapa(d){
+  // Mesmo visual da CAPA; só serviços em andamento (iniciados e não concluídos)
+  const C=calc(d);const rows=C.linhas.filter(l=>l.acum>0&&l.acum<C.tot);
+  const concl=C.linhas.filter(l=>l.acum>=C.tot).length, naoIni=C.linhas.filter(l=>!l.acum).length;
+  const sc=2, F="Calibri, Carlito, 'Segoe UI', Arial, sans-serif";
+  const cols=[["Nº",34],["SERVIÇOS",220],["REALIZADO\nNO DIA",78],["ACUMULADO\n(casas)",78],["%\nEXECUTADO",112],["ACUMULADO\nMÊS",76],["A\nREALIZAR",70],["FRENTES\nLIBERADAS",76],["MÉDIA\nNO MÊS",66]];
+  const M=16, Wt=cols.reduce((a,c)=>a+c[1],0), Wd=Wt+M*2, rh=22, hh=34, yT=M, yI=yT+40, yH=yI+56;
+  const Hd=yH+hh+Math.max(1,rows.length)*rh+44;
+  const cv=document.createElement("canvas");cv.width=Wd*sc;cv.height=Hd*sc;const g=cv.getContext("2d");g.scale(sc,sc);g.textBaseline="middle";
+  g.fillStyle="#fff";g.fillRect(0,0,Wd,Hd);
+  // título
+  g.fillStyle="#1F3864";g.fillRect(M,yT,Wt,34);g.fillStyle="#fff";g.textAlign="center";g.font=`700 17px ${F}`;
+  g.fillText("CONTROLE DE PRODUÇÃO DIÁRIA  ·  PARANAVAÍ  ·  FASE 1",M+Wt/2,yT+17);
+  // informações
+  const info=[["Data do levantamento",fmt(d),true],["Total de casas",C.tot],["Dias úteis no mês",C.uteisMes],["Dias úteis restantes",C.restantes]];
+  const iw=Wt/info.length;
+  info.forEach(([k,v,dest],i)=>{const x=M+i*iw;
+    g.fillStyle="#595959";g.font=`700 10px ${F}`;g.textAlign="left";g.fillText(k.toUpperCase(),x+4,yI+12);
+    if(dest){g.fillStyle="#FFF2CC";g.fillRect(x+4,yI+22,96,24)}
+    g.fillStyle=dest?"#0000FF":"#1F3864";g.font=`700 15px ${F}`;g.fillText(String(v),x+(dest?10:4),yI+34)});
+  // cabeçalho da tabela
+  let x=M;g.font=`700 10px ${F}`;g.textAlign="center";
+  cols.forEach(([t,w])=>{g.fillStyle="#2F5597";g.fillRect(x,yH,w,hh);g.strokeStyle="#fff";g.strokeRect(x,yH,w,hh);g.fillStyle="#fff";
+    const ls=t.split("\n");ls.forEach((s,k)=>g.fillText(s,x+w/2,yH+hh/2+(k-(ls.length-1)/2)*11));x+=w});
+  // linhas
+  if(!rows.length){g.fillStyle="#595959";g.font=`italic 12px ${F}`;g.textAlign="center";g.fillText("Nenhum serviço em andamento nesta data.",M+Wt/2,yH+hh+rh/2)}
+  rows.forEach((l,i)=>{const y=yH+hh+i*rh;x=M;
+    g.fillStyle=i%2?"#F3F6FB":"#fff";g.fillRect(M,y,Wt,rh);
+    const v=[l.s.num,l.s.nome,l.dia||"-",l.acum,null,l.mes,l.falta,l.frente??"-",l.media];
+    cols.forEach(([t,w],j)=>{
+      if(j===2&&l.dia){g.fillStyle="#C6E0B4";g.fillRect(x+1,y+1,w-2,rh-2)}
+      if(j===4){const bw=w-48,p=Math.min(1,l.pct);g.fillStyle="#DDE5F2";g.fillRect(x+6,y+8,bw,rh-16);g.fillStyle="#2F5597";g.fillRect(x+6,y+8,bw*p,rh-16);
+        g.fillStyle="#1F3864";g.font=`400 11px ${F}`;g.textAlign="right";g.fillText((l.pct*100).toFixed(1)+"%",x+w-5,y+rh/2);x+=w;return}
+      g.fillStyle=j===1?"#1F3864":(j===2&&l.dia?"#375623":"#000");
+      g.font=`${j===2&&l.dia?700:400} ${j===1?12:11}px ${F}`;g.textAlign=j===1?"left":"center";
+      let s=String(v[j]);if(j===1&&g.measureText(s).width>w-10){while(g.measureText(s+"…").width>w-10)s=s.slice(0,-1);s+="…"}
+      g.fillText(s,j===1?x+6:x+w/2,y+rh/2);x+=w});
+    g.strokeStyle="#D9DEE7";g.lineWidth=.6;g.beginPath();g.moveTo(M,y+rh);g.lineTo(M+Wt,y+rh);g.stroke();});
+  // rodapé
+  const yF=yH+hh+Math.max(1,rows.length)*rh+14;g.fillStyle="#595959";g.font=`400 11px ${F}`;g.textAlign="left";
+  g.fillText(`${rows.length} serviços em andamento  ·  ${concl} concluídos  ·  ${naoIni} não iniciados  ·  Detalhamento completo na planilha anexa`,M,yF+6);
+  g.fillStyle="#C6E0B4";g.fillRect(M+Wt-130,yF,10,10);g.fillStyle="#595959";g.fillText("produção no dia",M+Wt-116,yF+6);
+  return new Promise(r=>cv.toBlob(r,"image/png"));
+}
+
+// ---------- envio ----------
+let MODELO=null;
+async function gerarArquivos(){
+  const d=dia();
+  if(!MODELO){const bin=atob(window.MODELO_B64);MODELO=new Uint8Array(bin.length);for(let i=0;i<bin.length;i++)MODELO[i]=bin.charCodeAt(i)}
+  const servicos=ativos().map(s=>({num:s.num,nome:s.nome,aba:s.aba,ant:s.ant}));
+  const marks={};ativos().forEach(s=>marks[s.aba]=marksOf(s.id));
+  const zip=await MapaExport.gerar(JSZip,MODELO,{data:d,servicos,lots:LOTS,marks,soComDados:!S.email.todasAbas});
+  const xb=await zip.generateAsync({type:"blob",compression:"DEFLATE",compressionOptions:{level:9},mimeType:"application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"});
+  const img=await imagemCapa(d);
+  const nm=`Mapa_Producao_Fase_1_${d}`;
+  return{d,xlsx:new File([xb],nm+".xlsx",{type:xb.type}),png:new File([img],`Resumo_${d}.png`,{type:"image/png"})};
+}
+const assunto=d=>S.email.assunto.replace("{data}",fmt(d));
+async function copiar(t,ok){try{await navigator.clipboard.writeText(t);toast(ok)}catch(e){toast("Não consegui copiar. Selecione o texto e copie.",false,true)}}
+async function salvar(f){
+  try{const dl=window.claude&&await claude.use("downloads");if(dl){await dl.save({filename:f.name,data:f});return true}}catch(e){if(e&&e.code==="declined")return false}
+  const a=document.createElement("a");a.href=URL.createObjectURL(f);a.download=f.name;document.body.appendChild(a);a.click();setTimeout(()=>{URL.revokeObjectURL(a.href);a.remove()},2000);return true;
+}
+let ultimo=null;
+async function abrirEnvio(){
+  openSheet("Enviar levantamento",`<p class="msg" id="st">Gerando planilha e imagem do resumo…</p>`);
+  try{ultimo=await gerarArquivos()}catch(e){$("st").textContent="Erro ao gerar: "+(e.message||e);$("st").classList.add("err");return}
+  const f=ultimo, url=URL.createObjectURL(f.png);
+  const podeTudo=navigator.canShare&&navigator.canShare({files:[f.png,f.xlsx]});
+  const podeImg=navigator.canShare&&navigator.canShare({files:[f.png]});
+  $("sheetB").innerHTML=`
+    <div class="row"><button class="btn pri" id="eShare">Compartilhar no Outlook</button></div>
+    <p class="msg" id="eMsg">${podeTudo?"Abre o Outlook com a imagem e a planilha anexadas.":podeImg?"Este aparelho só compartilha a imagem. A planilha você salva e anexa.":"Compartilhar não está disponível aqui. Salve os arquivos e anexe no e-mail."}</p>
+    <div class="row"><button class="btn" id="eAss">Copiar assunto</button><button class="btn" id="ePara">Copiar destinatários</button></div>
+    <div class="row"><button class="btn" id="eX">Salvar planilha</button><button class="btn" id="eP">Salvar imagem</button></div>
+    <div class="grp">Imagem do resumo</div><img class="preview" src="${url}" alt="Resumo do dia ${fmt(f.d)}">
+    <p class="msg">Planilha: ${esc(f.xlsx.name)} · ${(f.xlsx.size/1048576).toFixed(1)} MB</p>`;
+  $("eShare").onclick=async()=>{
+    const files=podeTudo?[f.png,f.xlsx]:podeImg?[f.png]:null;
+    if(!files){toast("Compartilhar indisponível. Use Salvar.",false,true);return}
+    try{await navigator.share({files,title:assunto(f.d),text:assunto(f.d)});if(!podeTudo)toast("Agora anexe a planilha salva.",false,true)}
+    catch(e){if(e.name!=="AbortError")toast("Não abriu o compartilhamento. Use Salvar.",false,true)}};
+  $("eAss").onclick=()=>copiar(assunto(f.d),"Assunto copiado");
+  $("ePara").onclick=()=>S.email.para?copiar(S.email.para,"Destinatários copiados"):toast("Cadastre os destinatários em Ajustes.",false,true);
+  $("eX").onclick=()=>salvar(f.xlsx);$("eP").onclick=()=>salvar(f.png);
+}
+$("btnEnviar").onclick=abrirEnvio;
+
+// ---------- ajustes: serviços, e-mail, backup ----------
+function abrirAjustes(){
+  openSheet("Ajustes",`
+    <button class="item" id="aServ"><span>Serviços<br><small>Incluir, renomear, ordenar, desativar</small></span><small>${ativos().length} ativos</small></button>
+    <button class="item" id="aMail"><span>E-mail<br><small>Destinatários e assunto padrão</small></span></button>
+    <button class="item" id="aBk"><span>Backup dos lançamentos<br><small>Salvar ou restaurar um arquivo de segurança</small></span></button>
+    <p class="msg">Os lançamentos ficam salvos neste aparelho. A planilha enviada todo dia e o backup protegem contra perda do celular.</p>`);
+  $("aServ").onclick=abrirServEditor;$("aMail").onclick=abrirMail;$("aBk").onclick=abrirBackup;
+}
+$("btnMais").onclick=abrirAjustes;
+function abrirMail(){
+  openSheet("E-mail",`<label class="f">Destinatários (separe por ponto e vírgula)<textarea id="mPara" rows="3">${esc(S.email.para)}</textarea></label>
+  <label class="f">Assunto ({data} vira a data do levantamento)<input id="mAss" value="${esc(S.email.assunto)}"></label>
+  <label class="f" style="grid-template-columns:auto 1fr;align-items:center;font-size:14px;color:var(--ink)"><input type="checkbox" id="mTodas" ${S.email.todasAbas?"checked":""}> Incluir abas de serviços ainda sem lançamento</label>
+  <p class="msg">Cada aba de serviço pesa cerca de 100 KB. Com as 83 abas, a planilha passa de 8 MB. Desmarcado, só entram as abas dos serviços já iniciados; a CAPA continua com todos.</p>
+  <div class="row"><button class="btn pri" id="mOk">Salvar</button></div>`);
+  $("mOk").onclick=()=>{S.email.para=$("mPara").value.trim();S.email.assunto=$("mAss").value.trim()||S.email.assunto;S.email.todasAbas=$("mTodas").checked;save();toast("E-mail salvo");abrirAjustes()};
+}
+const ABA_RE=/[\\\/\?\*\[\]:]/;
+function abrirServEditor(){
+  const list=()=>S.servicos.map((s,i)=>{const n=Object.keys(marksOf(s.id)).length;const a=s.ant?S.servicos.find(x=>x.num===s.ant):null;
+    return `<div class="ed${s.ativo?"":" off"}"><div class="mv"><button data-up="${i}" aria-label="Subir">▲</button><button data-dn="${i}" aria-label="Descer">▼</button></div>
+    <div><b>${s.num} · ${esc(s.nome)}</b><small>Aba: ${esc(s.aba)} · ${n} lotes${a?` · após ${esc(a.nome)}`:""}${s.ativo?"":" · desativado"}</small></div>
+    <div class="acts"><button data-ed="${s.id}">Editar</button></div></div>`}).join("");
+  openSheet("Serviços",`<button class="btn pri" id="sNovo">Incluir serviço</button>
+    <p class="msg">A ordem aqui é a ordem da CAPA. Desativar esconde o serviço e mantém os lançamentos.</p><div id="sl" style="display:grid;gap:6px">${list()}</div>`);
+  const wire=()=>{$("sl").querySelectorAll("[data-up],[data-dn]").forEach(b=>b.onclick=()=>{const i=+(b.dataset.up??b.dataset.dn),j=b.dataset.up!=null?i-1:i+1;
+      if(j<0||j>=S.servicos.length)return;[S.servicos[i],S.servicos[j]]=[S.servicos[j],S.servicos[i]];save();$("sl").innerHTML=list();wire()});
+    $("sl").querySelectorAll("[data-ed]").forEach(b=>b.onclick=()=>editarServ(b.dataset.ed))};
+  wire();$("sNovo").onclick=()=>editarServ(null);
+}
+function editarServ(id){
+  const s=id?svcById(id):{id:"s"+Date.now().toString(36),num:Math.max(0,...S.servicos.map(x=>x.num))+1,nome:"",aba:"",ant:null,ativo:true};
+  const opts=S.servicos.filter(x=>x.id!==s.id).map(x=>`<option value="${x.num}"${x.num===s.ant?" selected":""}>${x.num} · ${esc(x.nome)}</option>`).join("");
+  openSheet(id?"Editar serviço":"Incluir serviço",`
+    <label class="f">Nome na CAPA<input id="eNome" value="${esc(s.nome)}"></label>
+    <label class="f">Nome da aba no Excel (até 31 caracteres)<input id="eAba" maxlength="31" value="${esc(s.aba)}"></label>
+    <label class="f">Serviço antecessor<select id="eAnt"><option value="">Nenhum</option>${opts}</select></label>
+    <label class="f" style="grid-template-columns:auto 1fr;align-items:center;font-size:14px;color:var(--ink)"><input type="checkbox" id="eAt" ${s.ativo?"checked":""}> Ativo</label>
+    <p class="msg err" id="eErr" hidden></p>
+    <div class="row"><button class="btn" id="eCan">Cancelar</button><button class="btn pri" id="eOk">Salvar</button></div>`);
+  $("eCan").onclick=abrirServEditor;
+  $("eOk").onclick=()=>{const nome=$("eNome").value.trim(),aba=$("eAba").value.trim().toUpperCase();const err=t=>{$("eErr").textContent=t;$("eErr").hidden=false};
+    if(!nome)return err("Informe o nome do serviço.");
+    if(!aba||ABA_RE.test(aba))return err("Nome da aba inválido. Não use \\ / ? * [ ] :");
+    if(["CAPA","MAPA MESTRE","MODELO LEVANTAMENTO","REFERÊNCIA PROJETO"].includes(aba))return err("Esse nome é de uma aba fixa da planilha.");
+    if(S.servicos.some(x=>x.id!==s.id&&x.aba.toUpperCase()===aba))return err("Já existe um serviço com essa aba.");
+    Object.assign(s,{nome,aba,ant:$("eAnt").value?+$("eAnt").value:null,ativo:$("eAt").checked});
+    if(!id)S.servicos.push(s);
+    if(!s.ativo&&S.atual===s.id)S.atual=ativos()[0]?.id;
+    save();paint();abrirServEditor();toast("Serviço salvo")};
+}
+function abrirBackup(){
+  openSheet("Backup",`<p class="msg">Salva todos os lançamentos e a lista de serviços num arquivo. Guarde no e-mail ou no computador.</p>
+  <div class="row"><button class="btn pri" id="bS">Salvar backup</button></div>
+  <label class="f">Restaurar de um arquivo de backup<input type="file" id="bR" accept=".json,application/json"></label><p class="msg" id="bMsg"></p>`);
+  $("bS").onclick=()=>salvar(new File([JSON.stringify(S)],`backup_levantamento_${dia()}.json`,{type:"application/json"}));
+  $("bR").onchange=async e=>{const f=e.target.files[0];if(!f)return;try{const s=JSON.parse(await f.text());if(!s.servicos||!s.marks)throw 0;
+      S=Object.assign(S,s);save();paint();$("bMsg").textContent="Backup restaurado."}catch(_){$("bMsg").textContent="Arquivo inválido.";$("bMsg").classList.add("err")}};
+}
+
+// ---------- início ----------
+(async function(){
+  $("dia").value=hoje();
+  try{MAPA=await (await fetch("mapa.json")).json()}catch(e){$("hint").textContent="Não consegui carregar o mapa. Abra com internet uma vez.";return}
+  LOTS=MAPA.lots;LOTIDX=Object.fromEntries(LOTS.map(l=>[l.id,l]));
+  load();
+  if(!S.servicos.length){S.servicos=MAPA.servicos.map(s=>({id:"s"+s.num,num:s.num,nome:s.nome,aba:String(s.aba).toUpperCase(),ant:s.ant||null,ativo:true}));
+    const r=S.servicos.find(s=>s.aba==="RADIER");S.atual=(r||S.servicos[0]).id;save()}
+  if(!svcById(S.atual))S.atual=ativos()[0]?.id;
+  buildMap();fitAlto();paint();
+  window.addEventListener("resize",fit);
+  if("serviceWorker" in navigator&&location.protocol==="https:"&&!/claude\.ai|claudeusercontent/.test(location.host))
+    navigator.serviceWorker.register("sw.js").catch(()=>{});
+})();
+</script>
+</body></html>
