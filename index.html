@@ -33,6 +33,9 @@ input[type=date]{font:500 14px var(--f-body);padding:5px 6px;border:1px solid va
 .svc .num em{font-style:normal;color:var(--today)}
 #mapwrap{flex:1;position:relative;overflow:hidden;touch-action:none;background:var(--bg)}
 #map{position:absolute;inset:0;width:100%;height:100%}
+#map .ln,#map .dt{display:none}
+#map.mid .ln,#map.near .dt{display:inline}
+#map .ql{paint-order:stroke;stroke:#fff;stroke-linejoin:round}
 .zoom{position:absolute;right:calc(10px + env(safe-area-inset-right,0px));top:10px;display:grid;gap:6px}
 .zoom button{width:40px;height:40px;border-radius:8px;border:1px solid var(--line);background:var(--surface);font-size:20px;cursor:pointer;box-shadow:0 1px 3px #0002}
 .hint{position:absolute;left:12px;bottom:10px;right:64px;font-size:12px;color:var(--muted);pointer-events:none}
@@ -65,6 +68,10 @@ table.res th{background:var(--navy);color:#fff;font-weight:600;font-size:11px;pa
 table.res td{border-bottom:1px solid var(--line);padding:5px 4px;text-align:center}
 table.res td:nth-child(2){text-align:left}
 table.res tr.hoje td{background:color-mix(in srgb,var(--today) 14%,transparent)}
+table.res tr.parado td{background:color-mix(in srgb,var(--warn) 15%,transparent)}
+.msg.alerta{color:var(--ink);background:color-mix(in srgb,var(--warn) 12%,transparent);border-radius:8px;padding:8px 10px}
+.sw{display:inline-block;width:10px;height:10px;border-radius:2px;vertical-align:-1px}
+.sw.hoje{background:color-mix(in srgb,var(--today) 30%,transparent)}.sw.parado{background:color-mix(in srgb,var(--warn) 30%,transparent)}
 .scroll{overflow-x:auto}
 .kpis{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
 .kpi{border:1px solid var(--line);border-radius:8px;padding:8px}
@@ -106,7 +113,7 @@ img.preview{width:100%;border:1px solid var(--line);border-radius:6px}
     <button id="zout" aria-label="Afastar">−</button>
     <button id="zfit" aria-label="Ver obra inteira" style="font-size:13px">⤢</button>
   </div>
-  <div class="hint" id="hint">Arraste para navegar e use a pinça para zoom. Toque no lote para lançar. Deitar o celular mostra mais quadras.</div>
+  <div class="hint" id="hint">Toque numa quadra para aproximar. Arraste para navegar e use a pinça para zoom. Aproximado, toque no lote para lançar.</div>
 </div>
 
 <nav class="bar">
@@ -203,6 +210,35 @@ function buildMap(){
   }
   LW.sort((a,b)=>a-b);LOTW=LW[LW.length>>1]||30;
 }
+// ---------- mapa a partir da implantação (DWG) ----------
+let DWG=null;
+const mapEl=$("map");
+function buildMapDWG(){
+  const D=DWG,vp=$("vp");vp.innerHTML="";W=D.w;H=D.h;lotEls={};LOTW=9;
+  const P=pts=>pts.map(p=>p.join(",")).join(" ");
+  el("rect",{x:0,y:0,width:W,height:H,fill:"#E9ECEF"},vp);
+  const HC={verde:"#B9DCB0",inst:"#C9A27E",com:"#F6C6CC"};
+  const gB=el("g",{fill:"#F7F8F9",stroke:"#CDD3DA","stroke-width":.25},vp),gH=el("g",{},vp),gL=el("g",{stroke:"#5A6B85","stroke-width":.3,"stroke-linejoin":"round"},vp);
+  const gT=el("g",{"font-family":"Barlow Condensed, Arial Narrow, sans-serif","text-anchor":"middle","dominant-baseline":"central"},vp);
+  for(const [k,pts] of D.hat) el("polygon",{points:P(pts),fill:HC[k]||"#ddd"},gH);
+  for(const pts of D.bg) el("polygon",{points:P(pts)},gB);
+  for(const r of D.roads){const [txt,x,y,rot,ha,h]=r;
+    el("text",{x,y,"font-size":Math.max(2.4,h*1.2),fill:"#7A8594","font-style":"italic","text-anchor":ha===1?"middle":"start",transform:`rotate(${rot} ${x} ${y})`},gT).textContent=txt}
+  const ST={pne:"#F1E2F8",semuh:"#E8D36A",com:"#F6C6CC",casa:"#FFFFFF"};
+  for(const l of D.f1){
+    const casa=l.st==="casa"||l.st==="pne";
+    const pg=el("polygon",{points:P(l.p),fill:ST[l.st]||"#fff"},gL);
+    const [cx,cy]=l.c, n=l.id.split("-")[1];
+    const ln=el("text",{x:cx,y:casa?cy-1.3:cy,"font-size":2.6,fill:"#1F3864","font-weight":700,class:"ln"},gT);ln.textContent=n;
+    if(!casa)continue;
+    pg.dataset.lot=l.id;ln.dataset.lot=l.id;
+    const dt=el("text",{x:cx,y:cy+1.7,"font-size":2.3,fill:"#123","font-weight":600,class:"dt"},gT);dt.dataset.lot=l.id;
+    const wn=el("circle",{cx:cx+3,cy:cy-3,r:.9,fill:"#c4691a",visibility:"hidden"},gT);wn.dataset.lot=l.id;
+    lotEls[l.id]={inp:pg,t:dt,wn,ln};
+  }
+  for(const [n,x,y,f1] of D.quad){
+    const t=el("text",{x,y,"font-size":f1?8:5,fill:f1?"#1F3864":"#A5AEB9","fill-opacity":f1?.9:1,"font-weight":700,class:"ql","stroke-width":f1?2:1.2},gT);t.textContent=n}
+}
 function paint(){
   const s=svcById(S.atual);if(!s)return;
   const mk=marksOf(s.id), ant=s.ant?S.servicos.find(x=>x.num===s.ant):null, amk=ant?marksOf(ant.id):null, d=dia();
@@ -210,7 +246,7 @@ function paint(){
     const L=lotEls[l.id];if(!L||!L.inp)continue;
     const v=mk[l.id];
     L.inp.setAttribute("fill",v?(v===d?"#2e7d4f":"#a9d8b8"):(l.pne?"#f1e2f8":"#ffffff"));
-    L.t.textContent=v?fmtC(v):"";L.t.setAttribute("fill",v===d?"#fff":"#123");
+    L.t.textContent=v?fmtC(v):"";L.t.setAttribute("fill",v===d?"#fff":"#123");if(L.ln)L.ln.setAttribute("fill",v===d?"#fff":"#1F3864");
     L.wn.setAttribute("visibility",v&&amk&&!amk[l.id]?"visible":"hidden");
   }
   const tot=Object.keys(mk).length, nd=Object.values(mk).filter(x=>x===d).length;
@@ -218,7 +254,7 @@ function paint(){
   $("svcNome").textContent=s.nome;
   $("svcCont").innerHTML=`${tot}/${LOTS.length}`+(nd?` <em>+${nd}</em>`:"");
 }
-function applyView(){$("vp").setAttribute("transform",`translate(${view.tx},${view.ty}) scale(${view.s})`)}
+function applyView(){$("vp").setAttribute("transform",`translate(${view.tx},${view.ty}) scale(${view.s})`);const px=view.s*LOTW;mapEl.classList.toggle("mid",px>10);mapEl.classList.toggle("near",px>22)}
 function fitAlto(){const r=$("map").getBoundingClientRect();const s=Math.min(r.height/H,Math.max(r.width/W,r.height/H));view={s,tx:W*s>r.width?8:(r.width-W*s)/2,ty:(r.height-H*s)/2};applyView()}
 function fit(){const r=$("map").getBoundingClientRect();const s=Math.min(r.width/W,r.height/H)*.98;view={s,tx:(r.width-W*s)/2,ty:(r.height-H*s)/2};applyView()}
 function zoomAt(f,cx,cy){const ns=Math.max(fitScale()*.8,Math.min(view.s*f,8));view.tx=cx-(cx-view.tx)*ns/view.s;view.ty=cy-(cy-view.ty)*ns/view.s;view.s=ns;applyView()}
@@ -228,7 +264,6 @@ $("zin").onclick=()=>zoomAt(1.6,...center());$("zout").onclick=()=>zoomAt(1/1.6,
 
 // gestos: arrastar, pinça, toque
 const ptrs=new Map();let pinch=null,moved=0,downAt=null;
-const mapEl=$("map");
 mapEl.addEventListener("pointerdown",e=>{$("hint").hidden=true;mapEl.setPointerCapture(e.pointerId);ptrs.set(e.pointerId,{x:e.clientX,y:e.clientY});moved=0;downAt={x:e.clientX,y:e.clientY,t:e.target};
   if(ptrs.size===2){const[a,b]=[...ptrs.values()];pinch={d:Math.hypot(a.x-b.x,a.y-b.y)}}});
 mapEl.addEventListener("pointermove",e=>{const p=ptrs.get(e.pointerId);if(!p)return;const r=mapEl.getBoundingClientRect();
@@ -296,13 +331,16 @@ function calc(d){
   return{linhas,tot,ini,fimS,uteisMes:uteis(ini,fimS),restantes:Math.max(0,uteis(d,fimS)-1)};
 }
 function abrirResumo(){
-  const d=dia(),C=calc(d);const comProd=C.linhas.filter(l=>l.dia).length;const casasDia=C.linhas.reduce((a,l)=>a+l.dia,0);
+  const d=dia(),C=calc(d);
+  const and=C.linhas.filter(l=>l.acum>0&&l.acum<C.tot), comProd=C.linhas.filter(l=>l.dia).length, parados=and.filter(l=>!l.dia);
+  const cls=l=>l.dia?"hoje":(l.acum>0&&l.acum<C.tot?"parado":"");
   openSheet(`Resumo · ${fmt(d)}`,`
-  <div class="kpis"><div class="kpi"><b>${comProd}</b><span>serviços com produção</span></div><div class="kpi"><b>${casasDia}</b><span>lançamentos no dia</span></div><div class="kpi"><b>${C.restantes}</b><span>dias úteis restantes</span></div></div>
+  <div class="kpis"><div class="kpi"><b>${and.length}</b><span>serviços em andamento</span></div><div class="kpi"><b>${comProd}</b><span>com produção no dia</span></div><div class="kpi"><b>${C.restantes}</b><span>dias úteis restantes</span></div></div>
+  ${parados.length?`<p class="msg alerta"><b>${parados.length}</b> em andamento sem produção hoje: ${parados.map(l=>esc(l.s.nome)).join(", ")}.</p>`:""}
   <div class="scroll"><table class="res"><thead><tr><th>Nº</th><th>Serviço</th><th>Dia</th><th>Acum.</th><th>%</th><th>Mês</th><th>A realizar</th><th>Frentes</th><th>Média</th></tr></thead><tbody>
-  ${C.linhas.map(l=>`<tr class="${l.dia?"hoje":""}"><td>${l.s.num}</td><td>${esc(l.s.nome)}</td><td>${l.dia}</td><td>${l.acum}</td><td>${(l.pct*100).toFixed(1)}%</td><td>${l.mes}</td><td>${l.falta}</td><td>${l.frente??"-"}</td><td>${l.media}</td></tr>`).join("")}
+  ${C.linhas.map(l=>`<tr class="${cls(l)}"><td>${l.s.num}</td><td>${esc(l.s.nome)}</td><td>${l.dia||"-"}</td><td>${l.acum}</td><td>${(l.pct*100).toFixed(1)}%</td><td>${l.mes}</td><td>${l.falta}</td><td>${l.frente??"-"}</td><td>${l.media}</td></tr>`).join("")}
   </tbody></table></div>
-  <p class="msg">Mesmos cálculos da CAPA. A planilha enviada recalcula tudo no Excel.</p>`);
+  <p class="msg"><span class="sw hoje"></span> produção no dia &nbsp; <span class="sw parado"></span> em andamento sem produção</p>`);
 }
 $("btnResumo").onclick=abrirResumo;
 
@@ -489,7 +527,9 @@ function abrirBackup(){
   if(!S.servicos.length){S.servicos=MAPA.servicos.map(s=>({id:"s"+s.num,num:s.num,nome:s.nome,aba:String(s.aba).toUpperCase(),ant:s.ant||null,ativo:true}));
     const r=S.servicos.find(s=>s.aba==="RADIER");S.atual=(r||S.servicos[0]).id;save()}
   if(!svcById(S.atual))S.atual=ativos()[0]?.id;
-  buildMap();fitAlto();paint();
+  try{DWG=await (await fetch("mapa_dwg.json")).json()}catch(e){DWG=null}
+  if(DWG){buildMapDWG();fit()}else{buildMap();fitAlto()}
+  paint();
   window.addEventListener("resize",fit);
   if("serviceWorker" in navigator&&location.protocol==="https:"&&!/claude\.ai|claudeusercontent/.test(location.host))
     navigator.serviceWorker.register("sw.js").catch(()=>{});
