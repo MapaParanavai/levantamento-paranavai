@@ -107,7 +107,7 @@
       R.atvs.filter(a => !R.A[a].existe).forEach(a => av.push(`A atividade ${a} não existe na lista do app.`));
       $("nAviso").textContent = av.join(" "); $("nAviso").className = av.length ? "msg err" : "msg";
       $("nOk").disabled = av.length > 0;
-      let html = `<tr><th>Item</th><th>Contrato</th><th>Executado acumulado</th><th>Medido acumulado</th><th>Previsão</th><th>Medição atual</th><th>Saldo</th></tr>`;
+      let html = `<tr><th>Item</th><th>Contratado</th><th>Executado acumulado</th><th>Medido acumulado</th><th>Previsão</th><th>Medição atual</th><th>Saldo</th></tr>`;
       const grupos = [...R.atvs.map(a => ({ a, its: R.itens.filter(i => i.atv === a) })), { a: null, its: R.itens.filter(i => !i.atv) }].filter(g => g.its.length);
       for (const g of grupos) {
         const A = g.a ? R.A[g.a] : null;
