@@ -51,7 +51,7 @@
       return `<button class="item" data-ct="${esc(c.id)}"><span><b>${esc(c.fornecedor)}</b><br><small>${esc(c.descricao)} · ${c.itens.length} itens${c.contrato ? " · " + esc(c.contrato) : ""}</small></span>
         <small>${h.length ? `${h.length} medições<br>última ${fmt(u.data)}` : "sem medições"}</small></button>`;
     }).join("") : `<p class="msg err">Nenhum contrato encontrado. Abra o app com internet uma vez.</p>`) +
-      `<p class="msg">A medição usa a produção lançada neste aparelho. No computador, receba antes o arquivo do celular (Ajustes → Transferir e backup).</p>`);
+      `<p class="msg">A medição usa a produção lançada neste aparelho. No computador, receba antes o arquivo do celular (Ações → Transferir e backup).</p>`);
     $("sheetB").querySelectorAll("[data-ct]").forEach(b => b.onclick = () => abrirContrato(b.dataset.ct));
   }
 
@@ -92,10 +92,10 @@
     let data = hoje();
     const prev = {};
     openSheet(`${ord(h.length + 1)} medição · ${ct.fornecedor}`, `<style>.mw>*+*{margin-top:10px}.mw input.pv{width:64px;font:inherit;padding:2px 4px}</style><div class="mw">
-      <label class="f" style="max-width:260px">Data da medição (produção acumulada até esta data)<input type="date" id="nData" value="${data}"></label>
+      <label class="f" style="max-width:260px">Data da medição (executado acumulado até esta data)<input type="date" id="nData" value="${data}"></label>
       <p class="msg" id="nAviso"></p>
       <div class="kpis"><div class="kpi"><b id="kTot">0</b><span>casas-item nesta medição</span></div><div class="kpi"><b id="kIt">0</b><span>itens com medição</span></div><div class="kpi"><b id="kAd">0</b><span>itens devendo</span></div></div>
-      <p class="msg"><b>Medição atual</b> = produção acumulada − já medido + previsão. Se der negativo, fica 0. Nunca passa do contratado. A <b>previsão</b> é opcional: casas que você prevê executar até o fechamento (dia 25).</p>
+      <p class="msg"><b>Medição atual</b> = executado acumulado − medido acumulado + previsão. Se der negativo, fica 0. Nunca passa do contratado. A <b>previsão</b> é opcional: casas que você prevê executar até o fechamento (dia 25).</p>
       <div class="scroll"><table class="res" id="nTab"></table></div>
       <div class="row"><button class="btn" id="nCan">Voltar</button><button class="btn pri" id="nOk">Fechar ${ord(h.length + 1)} medição</button></div></div>`);
     let R = null;
@@ -107,7 +107,7 @@
       R.atvs.filter(a => !R.A[a].existe).forEach(a => av.push(`A atividade ${a} não existe na lista do app.`));
       $("nAviso").textContent = av.join(" "); $("nAviso").className = av.length ? "msg err" : "msg";
       $("nOk").disabled = av.length > 0;
-      let html = `<tr><th>Item</th><th>Contrato</th><th>Produção acumulada</th><th>Já medido</th><th>Previsão</th><th>Medição atual</th><th>Saldo</th></tr>`;
+      let html = `<tr><th>Item</th><th>Contrato</th><th>Executado acumulado</th><th>Medido acumulado</th><th>Previsão</th><th>Medição atual</th><th>Saldo</th></tr>`;
       const grupos = [...R.atvs.map(a => ({ a, its: R.itens.filter(i => i.atv === a) })), { a: null, its: R.itens.filter(i => !i.atv) }].filter(g => g.its.length);
       for (const g of grupos) {
         const A = g.a ? R.A[g.a] : null;
@@ -115,7 +115,7 @@
           <td style="background:color-mix(in srgb,var(--navy) 10%,transparent)">${A ? `<input class="pv" type="number" min="0" data-prev="${A.num}" value="${A.prev || ""}" placeholder="0" aria-label="Previsão ${esc(A.nome)}">` : ""}</td>
           <td colspan="2" style="background:color-mix(in srgb,var(--navy) 10%,transparent)"></td></tr>`;
         for (const i of g.its) {
-          html += `<tr${i.devendo ? ` class="parado"` : i.q ? ` class="hoje"` : ""}><td style="text-align:left">${i.n} · ${esc(i.desc)}${i.devendo ? `<br><small><b>Devendo ${i.devendo} casas</b>: não mede até a produção alcançar</small>` : ""}</td>
+          html += `<tr${i.devendo ? ` class="parado"` : i.q ? ` class="hoje"` : ""}><td style="text-align:left">${i.n} · ${esc(i.desc)}${i.devendo ? `<br><small><b>Devendo ${i.devendo} casas</b>: não mede até o executado alcançar o medido</small>` : ""}</td>
             <td>${i.qtd}</td><td>${i.exec}</td><td>${i.ja}</td><td>${i.prev}</td><td><b>${i.q}</b></td><td>${i.saldo}</td></tr>`;
         }
       }

@@ -125,7 +125,7 @@ img.preview{width:100%;border:1px solid var(--line);border-radius:6px}
 <nav class="bar">
   <button id="btnResumo">Resumo</button>
   <button id="btnEnviar" class="pri">Enviar</button>
-  <button id="btnMais">Ajustes</button>
+  <button id="btnMais">Ações</button>
 </nav>
 
 <div class="toast" id="toast" hidden><span id="toastTxt"></span><button id="toastUndo">Desfazer</button></div>
@@ -146,7 +146,7 @@ const hoje=()=>{const d=new Date();d.setMinutes(d.getMinutes()-d.getTimezoneOffs
 const fmt=s=>s?s.slice(8,10)+"/"+s.slice(5,7)+"/"+s.slice(0,4):"";
 const fmtC=s=>s?s.slice(8,10)+"/"+s.slice(5,7):"";
 const dia=()=>$("dia").value||hoje();
-function save(){S.updatedAt=Date.now();try{localStorage.setItem(KEY,JSON.stringify(S))}catch(e){toast("Não consegui salvar no aparelho. Exporte um backup em Ajustes.",false,true)}}
+function save(){S.updatedAt=Date.now();try{localStorage.setItem(KEY,JSON.stringify(S))}catch(e){toast("Não consegui salvar no aparelho. Exporte um backup em Ações.",false,true)}}
 function load(){try{const r=localStorage.getItem(KEY);if(r){const s=JSON.parse(r);if(s&&s.servicos)S=Object.assign(S,s)}}catch(e){}}
 const svcById=id=>S.servicos.find(s=>s.id===id);
 const ativos=()=>S.servicos.filter(s=>s.ativo);
@@ -433,6 +433,7 @@ async function abrirEnvio(){
     <div class="row"><button class="btn pri" id="eShare">Enviar pelo Outlook</button></div>
     <p class="msg" id="eMsg">${podeImg?"Abre o compartilhamento com a imagem do resumo. A planilha é salva em Downloads ao mesmo tempo: no Outlook, toque no clipe e anexe da pasta Downloads.":"Compartilhar não está disponível aqui. Use Salvar planilha e Salvar imagem e anexe no e-mail."}</p>
     <div class="row"><button class="btn" id="eAss">Copiar assunto</button><button class="btn" id="ePara">Copiar destinatários</button></div>
+    <div class="row"><button class="btn" id="eCI">Copiar imagem (colar no corpo do e-mail)</button></div>
     <div class="row"><button class="btn" id="eX">Salvar planilha</button><button class="btn" id="eP">Salvar imagem</button></div>
     <div class="row"><button class="btn" id="ePC">Enviar para o computador</button></div>
     <div class="grp">Imagem do resumo</div><img class="preview" src="${url}" alt="Resumo do dia ${fmt(f.d)}">
@@ -445,14 +446,15 @@ async function abrirEnvio(){
     if(ok){await salvar(f.xlsx);toast("Planilha salva em Downloads. Anexe no Outlook pelo clipe.")}
   };
   $("eAss").onclick=()=>copiar(assunto(f.d),"Assunto copiado");
-  $("ePara").onclick=()=>S.email.para?copiar(S.email.para,"Destinatários copiados"):toast("Cadastre os destinatários em Ajustes.",false,true);
+  $("ePara").onclick=()=>S.email.para?copiar(S.email.para,"Destinatários copiados"):toast("Cadastre os destinatários em Ações.",false,true);
+  $("eCI").onclick=async()=>{try{await navigator.clipboard.write([new ClipboardItem({"image/png":f.png})]);toast("Imagem copiada. No e-mail, toque e segure no corpo e escolha Colar.")}catch(e){toast("Este aparelho não permite copiar imagem. Use Salvar imagem.",false,true)}};
   $("eX").onclick=()=>salvar(f.xlsx);$("eP").onclick=()=>salvar(f.png);$("ePC").onclick=enviarParaPC;
 }
 $("btnEnviar").onclick=abrirEnvio;
 
 // ---------- ajustes: serviços, e-mail, backup ----------
 function abrirAjustes(){
-  openSheet("Ajustes",`
+  openSheet("Ações",`
     <button class="item" id="aServ"><span>Serviços<br><small>Incluir, renomear, ordenar, desativar</small></span><small>${ativos().length} ativos</small></button>
     <button class="item" id="aMail"><span>E-mail<br><small>Destinatários e assunto padrão</small></span></button>
     <button class="item" id="aBk"><span>Transferir e backup<br><small>Enviar para o computador ou receber do celular</small></span></button>
