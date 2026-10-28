@@ -1,2 +1,1 @@
-{"name":"Levantamento de Produção · Paranavaí","short_name":"Levantamento","start_url":"./","scope":"./","display":"standalone","orientation":"any","background_color":"#eef1f4","theme_color":"#013244","lang":"pt-BR",
-"icons":[{"src":"icon-192.png","sizes":"192x192","type":"image/png"},{"src":"icon-512.png","sizes":"512x512","type":"image/png","purpose":"any maskable"}]}
+{"name": "Produção Paca · Paranavaí", "short_name": "Produção Paca", "start_url": "./", "scope": "./", "display": "standalone", "orientation": "any", "background_color": "#eef1f4", "theme_color": "#013244", "lang": "pt-BR", "icons": [{"src": "icon-192.png", "sizes": "192x192", "type": "image/png"}, {"src": "icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any maskable"}]}
