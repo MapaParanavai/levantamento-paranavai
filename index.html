@@ -1,6 +1,6 @@
 <!doctype html><html lang="pt-BR"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><title>Levantamento Paranavaí</title>
 <meta name="claude:viewport-fit-sides" content="cover">
-<meta name="theme-color" content="#1f3864">
+<meta name="theme-color" content="#013244">
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="icon" href="icon-192.png">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow:wght@400;500;600&family=Barlow+Condensed:wght@500;600;700&display=swap">
@@ -8,7 +8,7 @@
 /* Layout: app de uma tela — barra superior (serviço + data), mapa da obra com zoom ocupando o meio, barra inferior de ações. Folhas deslizantes para serviços, resumo e envio. */
 :root{
   --bg:#eef1f4; --surface:#ffffff; --ink:#18202b; --muted:#5d6878; --line:#cfd6df;
-  --navy:#1f3864; --blue:#2f5597; --lab:#d6e4f5; --pne:#f1e2f8; --done:#a9d8b8; --today:#2e7d4f; --today-ink:#fff;
+  --navy:#013244; --blue:#0e5a80; --red:#df062f; --yellow:#f8b706; --lab:#d6e4f5; --pne:#f1e2f8; --done:#a9d8b8; --today:#2e7d4f; --today-ink:#fff;
   --warn:#c4691a; --com:#f6c6cc; --semuh:#f2e27d;
   --f-display:"Barlow Condensed","Arial Narrow",system-ui,sans-serif;
   --f-body:"Barlow",system-ui,-apple-system,"Segoe UI",sans-serif;
@@ -24,6 +24,11 @@ button{font:inherit;color:inherit}
 :focus-visible{outline:2px solid var(--blue);outline-offset:2px}
 header{background:var(--surface);border-bottom:1px solid var(--line);padding-block:8px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));display:grid;gap:6px}
 .l1{display:flex;align-items:center;gap:8px;justify-content:space-between}
+.marca{display:flex;align-items:center;gap:8px;min-width:0}
+.marca img{height:24px;width:auto;display:block}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]) .marca img{background:#fff;border-radius:4px;padding:2px 4px}}
+:root[data-theme="dark"] .marca img{background:#fff;border-radius:4px;padding:2px 4px}
+.faixa{height:4px;background:linear-gradient(90deg,var(--navy) 0 38%,var(--yellow) 38% 41%,var(--red) 41% 100%)}
 .obra{font-family:var(--f-display);font-weight:700;font-size:13px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
 input[type=date]{font:500 14px var(--f-body);padding:5px 6px;border:1px solid var(--line);border-radius:6px;background:var(--surface);color:var(--ink)}
 .svc{display:flex;align-items:center;justify-content:space-between;gap:10px;width:100%;text-align:left;border:1px solid var(--line);border-radius:8px;background:var(--bg);padding:8px 10px;cursor:pointer}
@@ -97,7 +102,7 @@ img.preview{width:100%;border:1px solid var(--line);border-radius:6px}
 
 <header>
   <div class="l1">
-    <span class="obra" id="obra">Paranavaí · Fase 1</span>
+    <span class="marca"><img src="logo.png" alt="Pacaembu Construtora"><span class="obra" id="obra">Paranavaí · Fase 1</span></span>
     <input type="date" id="dia" aria-label="Data do levantamento">
   </div>
   <button class="svc" id="btnSvc" aria-haspopup="dialog">
@@ -105,6 +110,7 @@ img.preview{width:100%;border:1px solid var(--line);border-radius:6px}
     <span class="num" id="svcCont"></span>
   </button>
 </header>
+<div class="faixa" aria-hidden="true"></div>
 
 <div id="mapwrap">
   <svg id="map" role="application" aria-label="Mapa da obra"><g id="vp"></g></svg>
@@ -191,7 +197,7 @@ function buildMap(){
   for(const c of rodapes(MAPA.cells)){
     const x=X[c.c-1]-ox, y=Y[c.r-1]-oy, w=X[c.c-1+c.cs]-X[c.c-1], h=(Y[c.r-1+c.rs]-Y[c.r-1])*(c.ext?1.45:1);
     let fill=c.f?"#"+c.f:"none";
-    if(c.tot&&c.t!=="TOTAL")fill="#1F3864";
+    if(c.tot&&c.t!=="TOTAL")fill="#013244";
     const borda=c.lot||c.t;
     const r=el("rect",borda?{x:x+.5,y:y+.5,width:Math.max(0,w-1),height:Math.max(0,h-1),fill,stroke:"#9fb0c6","stroke-width":.6}:{x,y,width:w,height:h,fill},gCells);
     if(c.lot){
@@ -233,7 +239,7 @@ function buildMapDWG(){
     const casa=l.st==="casa"||l.st==="pne";
     const pg=el("polygon",{points:P(l.p),fill:ST[l.st]||"#fff"},gL);
     const [cx,cy]=l.c, n=l.id.split("-")[1];
-    const ln=el("text",{x:cx,y:casa?cy-1.3:cy,"font-size":2.6,fill:"#1F3864","font-weight":700,class:"ln"},gT);ln.textContent=n;
+    const ln=el("text",{x:cx,y:casa?cy-1.3:cy,"font-size":2.6,fill:"#013244","font-weight":700,class:"ln"},gT);ln.textContent=n;
     if(!casa)continue;
     pg.dataset.lot=l.id;ln.dataset.lot=l.id;
     const dt=el("text",{x:cx,y:cy+1.7,"font-size":2.3,fill:"#123","font-weight":600,class:"dt"},gT);dt.dataset.lot=l.id;
@@ -241,7 +247,7 @@ function buildMapDWG(){
     lotEls[l.id]={inp:pg,t:dt,wn,ln};
   }
   for(const [n,x,y,f1] of D.quad){
-    const t=el("text",{x,y,"font-size":f1?8:5,fill:f1?"#1F3864":"#A5AEB9","fill-opacity":f1?.9:1,"font-weight":700,class:"ql","stroke-width":f1?2:1.2},gT);t.textContent=n}
+    const t=el("text",{x,y,"font-size":f1?8:5,fill:f1?"#013244":"#A5AEB9","fill-opacity":f1?.9:1,"font-weight":700,class:"ql","stroke-width":f1?2:1.2},gT);t.textContent=n}
 }
 function paint(){
   const s=svcById(S.atual);if(!s)return;
@@ -250,7 +256,7 @@ function paint(){
     const L=lotEls[l.id];if(!L||!L.inp)continue;
     const v=mk[l.id];
     L.inp.setAttribute("fill",v?(v===d?"#2e7d4f":"#a9d8b8"):(l.pne?"#f1e2f8":"#ffffff"));
-    L.t.textContent=v?fmtC(v):"";L.t.setAttribute("fill",v===d?"#fff":"#123");if(L.ln)L.ln.setAttribute("fill",v===d?"#fff":"#1F3864");
+    L.t.textContent=v?fmtC(v):"";L.t.setAttribute("fill",v===d?"#fff":"#123");if(L.ln)L.ln.setAttribute("fill",v===d?"#fff":"#013244");
     L.wn.setAttribute("visibility",v&&amks.some(m=>!m[l.id])?"visible":"hidden");
   }
   const tot=Object.keys(mk).length, nd=Object.values(mk).filter(x=>x===d).length;
@@ -359,18 +365,22 @@ function imagemCapa(d){
   const cv=document.createElement("canvas");cv.width=Wd*sc;cv.height=Hd*sc;const g=cv.getContext("2d");g.scale(sc,sc);g.textBaseline="middle";
   g.fillStyle="#fff";g.fillRect(0,0,Wd,Hd);
   // título
-  g.fillStyle="#1F3864";g.fillRect(M,yT,Wt,34);g.fillStyle="#fff";g.textAlign="center";g.font=`700 17px ${F}`;
-  g.fillText("CONTROLE DE PRODUÇÃO DIÁRIA  ·  PARANAVAÍ  ·  FASE 1",M+Wt/2,yT+17);
+  const lg=LOGO.complete&&LOGO.naturalWidth?Math.round(34*LOGO.naturalWidth/LOGO.naturalHeight):0;
+  if(lg)g.drawImage(LOGO,M,yT,lg,34);
+  const xT=M+(lg?lg+10:0),wT=Wt-(xT-M);
+  g.fillStyle="#013244";g.fillRect(xT,yT,wT,30);g.fillStyle="#F8B706";g.fillRect(xT,yT+30,wT*.04,4);g.fillStyle="#DF062F";g.fillRect(xT+wT*.04,yT+30,wT*.96,4);
+  g.fillStyle="#fff";g.textAlign="center";g.font=`700 17px ${F}`;
+  g.fillText("CONTROLE DE PRODUÇÃO DIÁRIA  ·  PARANAVAÍ  ·  FASE 1",xT+wT/2,yT+15);
   // informações
   const info=[["Data do levantamento",fmt(d),true],["Total de casas",C.tot],["Dias úteis no mês",C.uteisMes],["Dias úteis restantes",C.restantes]];
   const iw=Wt/info.length;
   info.forEach(([k,v,dest],i)=>{const x=M+i*iw;
     g.fillStyle="#595959";g.font=`700 10px ${F}`;g.textAlign="left";g.fillText(k.toUpperCase(),x+4,yI+12);
     if(dest){g.fillStyle="#FFF2CC";g.fillRect(x+4,yI+22,96,24)}
-    g.fillStyle=dest?"#0000FF":"#1F3864";g.font=`700 15px ${F}`;g.fillText(String(v),x+(dest?10:4),yI+34)});
+    g.fillStyle=dest?"#0000FF":"#013244";g.font=`700 15px ${F}`;g.fillText(String(v),x+(dest?10:4),yI+34)});
   // cabeçalho da tabela
   let x=M;g.font=`700 10px ${F}`;g.textAlign="center";
-  cols.forEach(([t,w])=>{g.fillStyle="#2F5597";g.fillRect(x,yH,w,hh);g.strokeStyle="#fff";g.strokeRect(x,yH,w,hh);g.fillStyle="#fff";
+  cols.forEach(([t,w])=>{g.fillStyle="#0E5A80";g.fillRect(x,yH,w,hh);g.strokeStyle="#fff";g.strokeRect(x,yH,w,hh);g.fillStyle="#fff";
     const ls=t.split("\n");ls.forEach((s,k)=>g.fillText(s,x+w/2,yH+hh/2+(k-(ls.length-1)/2)*11));x+=w});
   // linhas
   if(!rows.length){g.fillStyle="#595959";g.font=`italic 12px ${F}`;g.textAlign="center";g.fillText("Nenhum serviço em andamento nesta data.",M+Wt/2,yH+hh+rh/2)}
@@ -379,9 +389,9 @@ function imagemCapa(d){
     const v=[l.s.num,l.s.nome,l.dia||"-",l.acum,null,l.mes,l.falta,l.frente??"-",l.media];
     cols.forEach(([t,w],j)=>{
       if(j===2&&l.dia){g.fillStyle="#C6E0B4";g.fillRect(x+1,y+1,w-2,rh-2)}
-      if(j===4){const bw=w-48,p=Math.min(1,l.pct);g.fillStyle="#DDE5F2";g.fillRect(x+6,y+8,bw,rh-16);g.fillStyle="#2F5597";g.fillRect(x+6,y+8,bw*p,rh-16);
-        g.fillStyle="#1F3864";g.font=`400 11px ${F}`;g.textAlign="right";g.fillText((l.pct*100).toFixed(1)+"%",x+w-5,y+rh/2);x+=w;return}
-      g.fillStyle=j===1?"#1F3864":(j===2&&l.dia?"#375623":"#000");
+      if(j===4){const bw=w-48,p=Math.min(1,l.pct);g.fillStyle="#DDE5F2";g.fillRect(x+6,y+8,bw,rh-16);g.fillStyle="#0E5A80";g.fillRect(x+6,y+8,bw*p,rh-16);
+        g.fillStyle="#013244";g.font=`400 11px ${F}`;g.textAlign="right";g.fillText((l.pct*100).toFixed(1)+"%",x+w-5,y+rh/2);x+=w;return}
+      g.fillStyle=j===1?"#013244":(j===2&&l.dia?"#375623":"#000");
       g.font=`${j===2&&l.dia?700:400} ${j===1?12:11}px ${F}`;g.textAlign=j===1?"left":"center";
       let s=String(v[j]);if(j===1&&g.measureText(s).width>w-10){while(g.measureText(s+"…").width>w-10)s=s.slice(0,-1);s+="…"}
       g.fillText(s,j===1?x+6:x+w/2,y+rh/2);x+=w});
@@ -395,6 +405,7 @@ function imagemCapa(d){
 
 // ---------- envio ----------
 let MODELO=null;
+const LOGO=new Image();LOGO.src="logo.png";
 async function gerarArquivos(){
   const d=dia();
   if(!MODELO){const bin=atob(window.MODELO_B64);MODELO=new Uint8Array(bin.length);for(let i=0;i<bin.length;i++)MODELO[i]=bin.charCodeAt(i)}
@@ -445,8 +456,9 @@ function abrirAjustes(){
     <button class="item" id="aServ"><span>Serviços<br><small>Incluir, renomear, ordenar, desativar</small></span><small>${ativos().length} ativos</small></button>
     <button class="item" id="aMail"><span>E-mail<br><small>Destinatários e assunto padrão</small></span></button>
     <button class="item" id="aBk"><span>Transferir e backup<br><small>Enviar para o computador ou receber do celular</small></span></button>
+    <button class="item" id="aMed"><span>Medição de prestadores<br><small>Medir contratos pela produção lançada (use no computador)</small></span></button>
     <p class="msg">Os lançamentos ficam salvos neste aparelho. A planilha enviada todo dia e o backup protegem contra perda do celular.</p>`);
-  $("aServ").onclick=abrirServEditor;$("aMail").onclick=abrirMail;$("aBk").onclick=abrirBackup;
+  $("aServ").onclick=abrirServEditor;$("aMail").onclick=abrirMail;$("aBk").onclick=abrirBackup;$("aMed").onclick=()=>window.Medicao?Medicao.abrir():toast("Medição indisponível. Abra o app com internet uma vez.",false,true);
 }
 $("btnMais").onclick=abrirAjustes;
 function abrirMail(){
@@ -548,4 +560,5 @@ function abrirBackup(){
     navigator.serviceWorker.register("sw.js").catch(()=>{});
 })();
 </script>
+<script src="medicao.js"></script>
 </body></html>
