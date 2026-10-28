@@ -148,7 +148,8 @@
       if (sv) {
         cx = setCell(cx, C.num + r, 'n', sv.num);
         cx = setCell(cx, C.nome + r, 'f', `HYPERLINK("#'"&$${C.aba}${r}&"'!A1","${String(sv.nome).replace(/"/g, '""')}")`);
-        if (C.ant) cx = sv.ant ? setCell(cx, C.ant + r, 'n', sv.ant) : setCell(cx, C.ant + r, 'x');
+        const an = Array.isArray(sv.ant) ? sv.ant : (sv.ant ? [sv.ant] : []);
+        if (C.ant) cx = an.length > 1 ? setCell(cx, C.ant + r, 's', an.join(' E ')) : an.length ? setCell(cx, C.ant + r, 'n', an[0]) : setCell(cx, C.ant + r, 'x');
         cx = setCell(cx, C.aba + r, 's', sv.aba);
       } else {
         [C.num, C.nome, C.ant, C.aba].filter(Boolean).forEach(c => cx = setCell(cx, c + r, 'x'));

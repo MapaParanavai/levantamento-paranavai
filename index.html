@@ -144,6 +144,10 @@ function save(){S.updatedAt=Date.now();try{localStorage.setItem(KEY,JSON.stringi
 function load(){try{const r=localStorage.getItem(KEY);if(r){const s=JSON.parse(r);if(s&&s.servicos)S=Object.assign(S,s)}}catch(e){}}
 const svcById=id=>S.servicos.find(s=>s.id===id);
 const ativos=()=>S.servicos.filter(s=>s.ativo);
+// antecessoras: s.ant pode ser número (uma) ou lista (várias)
+const antNums=s=>Array.isArray(s.ant)?s.ant:(s.ant?[s.ant]:[]);
+const antsOf=s=>antNums(s).map(n=>S.servicos.find(x=>x.num===n)).filter(Boolean);
+const nomesAnt=a=>a.map(x=>x.nome).join(" + ");
 const marksOf=id=>S.marks[id]||(S.marks[id]={});
 
 // ---------- mapa ----------
@@ -241,16 +245,16 @@ function buildMapDWG(){
 }
 function paint(){
   const s=svcById(S.atual);if(!s)return;
-  const mk=marksOf(s.id), ant=s.ant?S.servicos.find(x=>x.num===s.ant):null, amk=ant?marksOf(ant.id):null, d=dia();
+  const mk=marksOf(s.id), ants=antsOf(s), amks=ants.map(a=>marksOf(a.id)), d=dia();
   for(const l of LOTS){
     const L=lotEls[l.id];if(!L||!L.inp)continue;
     const v=mk[l.id];
     L.inp.setAttribute("fill",v?(v===d?"#2e7d4f":"#a9d8b8"):(l.pne?"#f1e2f8":"#ffffff"));
     L.t.textContent=v?fmtC(v):"";L.t.setAttribute("fill",v===d?"#fff":"#123");if(L.ln)L.ln.setAttribute("fill",v===d?"#fff":"#1F3864");
-    L.wn.setAttribute("visibility",v&&amk&&!amk[l.id]?"visible":"hidden");
+    L.wn.setAttribute("visibility",v&&amks.some(m=>!m[l.id])?"visible":"hidden");
   }
   const tot=Object.keys(mk).length, nd=Object.values(mk).filter(x=>x===d).length;
-  $("svcNum").textContent=`Serviço ${s.num}`+(ant?` · antecessora: ${ant.nome}`:"");
+  $("svcNum").textContent=`Serviço ${s.num}`+(ants.length?` · ${ants.length>1?"antecessoras":"antecessora"}: ${nomesAnt(ants)}`:"");
   $("svcNome").textContent=s.nome;
   $("svcCont").innerHTML=`${tot}/${LOTS.length}`+(nd?` <em>+${nd}</em>`:"");
 }
@@ -288,11 +292,10 @@ function toggle(lotId){
   const s=svcById(S.atual),mk=marksOf(s.id),d=dia(),antes=mk[lotId],l=LOTIDX[lotId];
   if(antes)delete mk[lotId];else mk[lotId]=d;
   save();paint();
-  const ant=s.ant?S.servicos.find(x=>x.num===s.ant):null;
-  const falta=!antes&&ant&&!marksOf(ant.id)[lotId];
+  const faltam=antes?[]:antsOf(s).filter(a=>!marksOf(a.id)[lotId]), falta=faltam.length>0;
   undo=()=>{if(antes)mk[lotId]=antes;else delete mk[lotId];save();paint()};
   const nome=`${l.q} · lote ${l.n}`+(l.pne?" (PNE)":"");
-  toast(antes?`${nome}: desmarcado (era ${fmtC(antes)})`:`${nome}: ${s.nome} em ${fmtC(d)}`+(falta?` · sem ${ant.nome}!`:""),true,falta);
+  toast(antes?`${nome}: desmarcado (era ${fmtC(antes)})`:`${nome}: ${s.nome} em ${fmtC(d)}`+(falta?` · sem ${nomesAnt(faltam)}!`:""),true,falta);
 }
 function toast(t,canUndo,warn){$("toastTxt").textContent=t;$("toastUndo").hidden=!canUndo;const T=$("toast");T.classList.toggle("warn",!!warn);T.hidden=false;clearTimeout(tt);tt=setTimeout(()=>T.hidden=true,warn?6000:3500)}
 $("toastUndo").onclick=()=>{if(undo){undo();undo=null}$("toast").hidden=true};
@@ -327,7 +330,7 @@ function calc(d){
   const tot=LOTS.length, du=Math.max(1,uteis(ini,d));
   const linhas=ativos().map(s=>{const v=Object.values(marksOf(s.id));const acum=v.length;
     const mes=v.filter(x=>x>=ini&&x<=fimS).length;return{s,dia:v.filter(x=>x===d).length,acum,pct:tot?acum/tot:0,mes,falta:tot-acum,media:Math.round(mes/du*10)/10}});
-  linhas.forEach(L=>{const a=L.s.ant?linhas.find(x=>x.s.num===L.s.ant):null;L.frente=a?Math.max(0,a.acum-L.acum):null});
+  linhas.forEach(L=>{const a=antNums(L.s).map(n=>linhas.find(x=>x.s.num===n)).filter(Boolean);L.frente=a.length?Math.max(0,Math.min(...a.map(x=>x.acum))-L.acum):null});
   return{linhas,tot,ini,fimS,uteisMes:uteis(ini,fimS),restantes:Math.max(0,uteis(d,fimS)-1)};
 }
 function abrirResumo(){
@@ -456,9 +459,9 @@ function abrirMail(){
 }
 const ABA_RE=/[\\\/\?\*\[\]:]/;
 function abrirServEditor(){
-  const list=()=>S.servicos.map((s,i)=>{const n=Object.keys(marksOf(s.id)).length;const a=s.ant?S.servicos.find(x=>x.num===s.ant):null;
+  const list=()=>S.servicos.map((s,i)=>{const n=Object.keys(marksOf(s.id)).length;const a=antsOf(s);
     return `<div class="ed${s.ativo?"":" off"}"><div class="mv"><button data-up="${i}" aria-label="Subir">▲</button><button data-dn="${i}" aria-label="Descer">▼</button></div>
-    <div><b>${s.num} · ${esc(s.nome)}</b><small>Aba: ${esc(s.aba)} · ${n} lotes${a?` · após ${esc(a.nome)}`:""}${s.ativo?"":" · desativado"}</small></div>
+    <div><b>${s.num} · ${esc(s.nome)}</b><small>Aba: ${esc(s.aba)} · ${n} lotes${a.length?` · após ${esc(nomesAnt(a))}`:""}${s.ativo?"":" · desativado"}</small></div>
     <div class="acts"><button data-ed="${s.id}">Editar</button></div></div>`}).join("");
   openSheet("Serviços",`<button class="btn pri" id="sNovo">Incluir serviço</button>
     <p class="msg">A ordem aqui é a ordem da CAPA. Desativar esconde o serviço e mantém os lançamentos.</p><div id="sl" style="display:grid;gap:6px">${list()}</div>`);
@@ -469,11 +472,12 @@ function abrirServEditor(){
 }
 function editarServ(id){
   const s=id?svcById(id):{id:"s"+Date.now().toString(36),num:Math.max(0,...S.servicos.map(x=>x.num))+1,nome:"",aba:"",ant:null,ativo:true};
-  const opts=S.servicos.filter(x=>x.id!==s.id).map(x=>`<option value="${x.num}"${x.num===s.ant?" selected":""}>${x.num} · ${esc(x.nome)}</option>`).join("");
+  const an=antNums(s),opts=k=>S.servicos.filter(x=>x.id!==s.id).map(x=>`<option value="${x.num}"${x.num===an[k]?" selected":""}>${x.num} · ${esc(x.nome)}</option>`).join("");
   openSheet(id?"Editar serviço":"Incluir serviço",`
     <label class="f">Nome na CAPA<input id="eNome" value="${esc(s.nome)}"></label>
     <label class="f">Nome da aba no Excel (até 31 caracteres)<input id="eAba" maxlength="31" value="${esc(s.aba)}"></label>
-    <label class="f">Serviço antecessor<select id="eAnt"><option value="">Nenhum</option>${opts}</select></label>
+    <label class="f">Antecessora<select id="eAnt"><option value="">Nenhuma</option>${opts(0)}</select></label>
+    <label class="f">2ª antecessora (só se houver duas frentes)<select id="eAnt2"><option value="">Nenhuma</option>${opts(1)}</select></label>
     <label class="f" style="grid-template-columns:auto 1fr;align-items:center;font-size:14px;color:var(--ink)"><input type="checkbox" id="eAt" ${s.ativo?"checked":""}> Ativo</label>
     <p class="msg err" id="eErr" hidden></p>
     <div class="row"><button class="btn" id="eCan">Cancelar</button><button class="btn pri" id="eOk">Salvar</button></div>`);
@@ -483,7 +487,8 @@ function editarServ(id){
     if(!aba||ABA_RE.test(aba))return err("Nome da aba inválido. Não use \\ / ? * [ ] :");
     if(["CAPA","MAPA MESTRE","MODELO LEVANTAMENTO","REFERÊNCIA PROJETO"].includes(aba))return err("Esse nome é de uma aba fixa da planilha.");
     if(S.servicos.some(x=>x.id!==s.id&&x.aba.toUpperCase()===aba))return err("Já existe um serviço com essa aba.");
-    Object.assign(s,{nome,aba,ant:$("eAnt").value?+$("eAnt").value:null,ativo:$("eAt").checked});
+    const na=[...new Set([$("eAnt").value,$("eAnt2").value].filter(Boolean).map(Number))];
+    Object.assign(s,{nome,aba,ant:na.length>1?na:(na[0]||null),ativo:$("eAt").checked});
     if(!id)S.servicos.push(s);
     if(!s.ativo&&S.atual===s.id)S.atual=ativos()[0]?.id;
     save();paint();abrirServEditor();toast("Serviço salvo")};
@@ -503,12 +508,13 @@ function abrirBackup(){
   <div class="grp">No celular</div>
   <button class="btn pri" id="bS">Enviar para o computador</button>
   <p class="msg">Gera um arquivo com todos os lançamentos e abre o compartilhamento. Mande para você mesma por e-mail ou WhatsApp. Também serve de backup.</p>
-  <div class="grp">No computador</div>
-  <label class="f">Receber do celular: escolha o arquivo levantamento_….txt<input type="file" id="bR" accept=".txt,.json,text/plain,application/json"></label>
+  <div class="grp">No aparelho que vai receber</div>
+  <label class="f">Receber de outro aparelho: escolha o arquivo levantamento_….txt<input type="file" id="bR" accept=".txt,.json,text/plain,application/json"></label>
   <div id="bConf"></div><p class="msg" id="bMsg"></p>`);
   $("bS").onclick=enviarParaPC;
   $("bR").onchange=async e=>{const f=e.target.files[0];$("bConf").innerHTML="";$("bMsg").textContent="";$("bMsg").classList.remove("err");if(!f)return;
     let s;try{s=JSON.parse(await f.text());if(!s.servicos||!s.marks)throw 0}catch(_){$("bMsg").textContent="Arquivo inválido. Use o arquivo gerado em Enviar para o computador.";$("bMsg").classList.add("err");return}
+    if((s.listaVer||1)!==(MAPA.listaVer||1)){$("bMsg").textContent="Este arquivo é de uma lista de serviços antiga e não pode ser usado nesta versão do app.";$("bMsg").classList.add("err");return}
     const n=s._lanc??s.servicos.reduce((a,x)=>a+Object.keys(s.marks[x.id]||{}).length,0);
     const quando=s._geradoEm?new Date(s._geradoEm).toLocaleString("pt-BR",{dateStyle:"short",timeStyle:"short"}):"data desconhecida";
     $("bConf").innerHTML=`<p class="msg">Arquivo gerado em <b>${quando}</b> com <b>${n}</b> lançamentos. Os dados deste aparelho serão substituídos por ele.</p>
@@ -525,12 +531,18 @@ function abrirBackup(){
   try{MAPA=await (await fetch("mapa.json")).json()}catch(e){$("hint").textContent="Não consegui carregar o mapa. Abra com internet uma vez.";return}
   LOTS=MAPA.lots;LOTIDX=Object.fromEntries(LOTS.map(l=>[l.id,l]));
   load();
+  // lista de serviços nova (listaVer): guarda cópia dos dados antigos e recomeça com a lista padrão
+  const LV=MAPA.listaVer||1;let novaLista=false;
+  if(S.servicos.length&&(S.listaVer||1)!==LV){try{localStorage.setItem(KEY+"-antes-lista"+LV,JSON.stringify(S))}catch(e){}
+    S.servicos=[];S.marks={};S.atual=null;novaLista=true}
+  S.listaVer=LV;
   if(!S.servicos.length){S.servicos=MAPA.servicos.map(s=>({id:"s"+s.num,num:s.num,nome:s.nome,aba:String(s.aba).toUpperCase(),ant:s.ant||null,ativo:true}));
     const r=S.servicos.find(s=>s.aba==="RADIER");S.atual=(r||S.servicos[0]).id;save()}
   if(!svcById(S.atual))S.atual=ativos()[0]?.id;
   try{DWG=await (await fetch("mapa_dwg.json")).json()}catch(e){DWG=null}
   if(DWG){buildMapDWG();fit()}else{buildMap();fitAlto()}
   paint();
+  if(novaLista)toast("Lista de serviços atualizada. Os lançamentos de teste foram zerados.",false,true);
   window.addEventListener("resize",fit);
   if("serviceWorker" in navigator&&location.protocol==="https:"&&!/claude\.ai|claudeusercontent/.test(location.host))
     navigator.serviceWorker.register("sw.js").catch(()=>{});
