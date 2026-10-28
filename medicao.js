@@ -1,7 +1,7 @@
 // ---------- Medição de prestadores (protótipo) ----------
-// Regra por item: medição do mês = mín(qtd contratada, (executado até a data + previsão) × fator + ajuste) − já medido; nunca negativa.
+// Regra por item: medição atual = mín(qtd contratada, produção acumulada + previsão) − já medido; nunca negativa.
 // Histórico das medições fica numa chave própria do aparelho, que a transferência do celular não apaga.
-// Estrutura pensada para ir para a nuvem sem mudar: contratos[] com itens[], medicoes[contratoId][] com itens{n:{q,exec,prev,aj,just}}.
+// Estrutura pensada para ir para a nuvem sem mudar: contratos[] com itens[], medicoes[contratoId][] com itens{n:{q,exec,prev}}.
 "use strict";
 (function () {
   const MKEY = "levprod-paranavai-f1-medicoes";
@@ -17,39 +17,28 @@
   }
   const meds = id => (MED.medicoes[id] = MED.medicoes[id] || []);
   const svcNum = n => S.servicos.find(s => s.num === n);
-  const addDias = (d, n) => { const x = new Date(d + "T12:00"); x.setDate(x.getDate() + n); return x.toISOString().slice(0, 10); };
-  const dia25 = d => d.slice(0, 8) + "25";
   const N = v => { const x = Math.round(+v); return isFinite(x) ? x : 0; };
   const ord = k => k + "ª";
 
   function execAte(num, data) { const s = svcNum(num); if (!s) return 0; return Object.values(marksOf(s.id)).filter(d => d <= data).length; }
-  function media(num, data) {
-    const s = svcNum(num); if (!s) return 0; const ini = addDias(data, -29);
-    const n = Object.values(marksOf(s.id)).filter(d => d >= ini && d <= data).length;
-    return n / Math.max(1, uteis(ini, data));
-  }
 
-  // calcula a medição: prev = {atv: casas}, aj = {n: {q, just}}
-  function calcular(ct, data, prevAte, prev, aj) {
+  // Medição atual = produção real acumulada − já medido + previsão (opcional); nunca negativa; nunca passa do contratado
+  function calcular(ct, data, prev) {
     const tot = LOTS.length, hist = meds(ct.id);
     const atvs = [...new Set(ct.itens.map(i => i.atv).filter(Boolean))].sort((a, b) => a - b);
     const A = {};
     for (const a of atvs) {
       const s = svcNum(a), exec = execAte(a, data);
-      const du = prevAte > data ? uteis(addDias(data, 1), prevAte) : 0;
-      const sug = Math.max(0, Math.min(tot - exec, Math.round(media(a, data) * du)));
-      const p = prev[a] != null ? Math.max(0, Math.min(tot - exec, N(prev[a]))) : sug;
-      A[a] = { num: a, nome: s ? s.nome : "Atividade " + a + " (não existe no app)", existe: !!s, exec, sug, prev: p };
+      const p = Math.max(0, Math.min(tot - exec, N(prev[a] || 0)));
+      A[a] = { num: a, nome: s ? s.nome : "Atividade " + a + " (não existe no app)", existe: !!s, exec, prev: p };
     }
     const itens = ct.itens.map(i => {
       const a = i.atv ? A[i.atv] : null, f = i.fator || 1;
       const ja = hist.reduce((t, m) => t + ((m.itens[i.n] || {}).q || 0), 0);
       const exec = a ? a.exec * f : 0, pv = a ? a.prev * f : 0;
-      const ajq = aj[i.n] ? N(aj[i.n].q) : 0;
-      const alvo = Math.min(i.qtd, exec + pv + ajq);
-      const q = Math.max(0, alvo - ja);
-      const adiantado = Math.max(0, ja - (exec + pv + ajq));
-      return { ...i, ja, exec, prev: pv, aj: ajq, just: aj[i.n] ? aj[i.n].just || "" : "", q, saldo: i.qtd - ja - q, adiantado };
+      const q = Math.max(0, Math.min(i.qtd, exec + pv) - ja);
+      const devendo = Math.max(0, ja - (exec + pv));
+      return { ...i, ja, exec, prev: pv, q, saldo: i.qtd - ja - q, devendo };
     });
     return { A, atvs, itens, total: itens.reduce((t, i) => t + i.q, 0) };
   }
@@ -73,8 +62,8 @@
     openSheet(ct.fornecedor, `
       <p class="msg">${esc(ct.descricao)} · ${ct.itens.length} itens · contrato ${esc(ct.contrato || "a definir")}<br>Produção deste aparelho atualizada em <b>${atualizado}</b>.</p>
       <div class="row"><button class="btn pri" id="mNova">Nova medição (${ord(h.length + 1)})</button></div>
-      ${h.length ? `<div class="grp">Medições fechadas</div><div class="scroll"><table class="res" style="min-width:0"><tr><th>Nº</th><th>Data</th><th>Previsão até</th><th>Casas-item</th></tr>
-        ${h.map(m => `<tr><td>${ord(m.num)}</td><td>${fmt(m.data)}</td><td>${fmt(m.prevAte)}</td><td>${Object.values(m.itens).reduce((t, x) => t + x.q, 0)}</td></tr>`).join("")}</table></div>
+      ${h.length ? `<div class="grp">Medições fechadas</div><div class="scroll"><table class="res" style="min-width:0"><tr><th>Nº</th><th>Data</th><th>Casas-item</th></tr>
+        ${h.map(m => `<tr><td>${ord(m.num)}</td><td>${fmt(m.data)}</td><td>${Object.values(m.itens).reduce((t, x) => t + x.q, 0)}</td></tr>`).join("")}</table></div>
       <div class="row"><button class="btn" id="mBol">Boletim da ${ord(h.length)}</button><button class="btn" id="mDesf">Desfazer a ${ord(h.length)}</button></div>` : `<p class="msg">Nenhuma medição fechada ainda.</p>`}
       <div class="grp">Backup das medições</div>
       <div class="row"><button class="btn" id="mBk">Salvar backup</button></div>
@@ -100,55 +89,47 @@
 
   function novaMedicao(ct) {
     const h = meds(ct.id), ult = h[h.length - 1];
-    let data = hoje(), prevAte = dia25(hoje()); if (prevAte < data) prevAte = data;
-    const prev = {}, aj = {};
-    openSheet(`${ord(h.length + 1)} medição · ${ct.fornecedor}`, `<style>.mw>*+*{margin-top:10px}</style><div class="mw">
-      <div class="row">
-        <label class="f" style="flex:1">Data da medição<input type="date" id="nData" value="${data}"></label>
-        <label class="f" style="flex:1">Previsão de execução até<input type="date" id="nPrev" value="${prevAte}"></label>
-      </div>
+    let data = hoje();
+    const prev = {};
+    openSheet(`${ord(h.length + 1)} medição · ${ct.fornecedor}`, `<style>.mw>*+*{margin-top:10px}.mw input.pv{width:64px;font:inherit;padding:2px 4px}</style><div class="mw">
+      <label class="f" style="max-width:260px">Data da medição (produção acumulada até esta data)<input type="date" id="nData" value="${data}"></label>
       <p class="msg" id="nAviso"></p>
-      <div class="kpis"><div class="kpi"><b id="kTot">0</b><span>casas-item nesta medição</span></div><div class="kpi"><b id="kIt">0</b><span>itens com medição</span></div><div class="kpi"><b id="kAd">0</b><span>itens com adiantado</span></div></div>
+      <div class="kpis"><div class="kpi"><b id="kTot">0</b><span>casas-item nesta medição</span></div><div class="kpi"><b id="kIt">0</b><span>itens com medição</span></div><div class="kpi"><b id="kAd">0</b><span>itens devendo</span></div></div>
+      <p class="msg"><b>Medição atual</b> = produção acumulada − já medido + previsão. Se der negativo, fica 0. Nunca passa do contratado. A <b>previsão</b> é opcional: casas que você prevê executar até o fechamento (dia 25).</p>
       <div class="scroll"><table class="res" id="nTab"></table></div>
-      <p class="msg">Previsão: sugerida pela produção média dos últimos 30 dias × dias úteis até a data da previsão. Pode editar. Ajuste: só para casos especiais (ex.: ajuda ao empreiteiro), com justificativa.</p>
       <div class="row"><button class="btn" id="nCan">Voltar</button><button class="btn pri" id="nOk">Fechar ${ord(h.length + 1)} medição</button></div></div>`);
     let R = null;
     const desenhar = () => {
-      data = $("nData").value || hoje(); prevAte = $("nPrev").value || data;
-      R = calcular(ct, data, prevAte, prev, aj);
+      data = $("nData").value || hoje();
+      R = calcular(ct, data, prev);
       const av = [];
       if (ult && data <= ult.data) av.push(`A data precisa ser depois da ${ord(ult.num)} medição (${fmt(ult.data)}).`);
-      if (prevAte < data) av.push("A previsão precisa terminar na data da medição ou depois.");
       R.atvs.filter(a => !R.A[a].existe).forEach(a => av.push(`A atividade ${a} não existe na lista do app.`));
       $("nAviso").textContent = av.join(" "); $("nAviso").className = av.length ? "msg err" : "msg";
       $("nOk").disabled = av.length > 0;
-      let html = `<tr><th>Item</th><th>Contr.</th><th>Já medido</th><th>Exec.</th><th>Prev.</th><th>Ajuste</th><th>Medição</th><th>Saldo</th></tr>`;
+      let html = `<tr><th>Item</th><th>Contrato</th><th>Produção acumulada</th><th>Já medido</th><th>Previsão</th><th>Medição atual</th><th>Saldo</th></tr>`;
       const grupos = [...R.atvs.map(a => ({ a, its: R.itens.filter(i => i.atv === a) })), { a: null, its: R.itens.filter(i => !i.atv) }].filter(g => g.its.length);
       for (const g of grupos) {
         const A = g.a ? R.A[g.a] : null;
-        html += `<tr><td colspan="8" style="text-align:left;background:color-mix(in srgb,var(--navy) 10%,transparent)"><b>${A ? A.num + " · " + esc(A.nome) : "Sem atividade vinculada"}</b>
-          ${A ? ` · executado até ${fmtC(data)}: <b>${A.exec}</b> · previsão: <input type="number" min="0" data-prev="${A.num}" value="${A.prev}" style="width:64px;font:inherit;padding:2px 4px"> <small>(sugerida ${A.sug})</small>` : ""}</td></tr>`;
+        html += `<tr><td colspan="4" style="text-align:left;background:color-mix(in srgb,var(--navy) 10%,transparent)"><b>${A ? A.num + " · " + esc(A.nome) : "Sem atividade vinculada"}</b></td>
+          <td style="background:color-mix(in srgb,var(--navy) 10%,transparent)">${A ? `<input class="pv" type="number" min="0" data-prev="${A.num}" value="${A.prev || ""}" placeholder="0" aria-label="Previsão ${esc(A.nome)}">` : ""}</td>
+          <td colspan="2" style="background:color-mix(in srgb,var(--navy) 10%,transparent)"></td></tr>`;
         for (const i of g.its) {
-          html += `<tr${i.adiantado ? ` class="parado" title="Adiantado de ${i.adiantado} aguardando execução"` : i.q ? ` class="hoje"` : ""}><td style="text-align:left">${i.n} · ${esc(i.desc)}${i.aj ? `<br><input data-just="${i.n}" placeholder="Justificativa do ajuste" value="${esc(i.just)}" style="width:100%;font:inherit;font-size:12px;padding:2px 4px">` : ""}${i.adiantado ? `<br><small>adiantado de ${i.adiantado} aguardando execução</small>` : ""}</td>
-            <td>${i.qtd}</td><td>${i.ja}</td><td>${i.exec}</td><td>${i.prev}</td>
-            <td><input type="number" data-aj="${i.n}" value="${i.aj || ""}" style="width:56px;font:inherit;padding:2px 4px"></td><td><b>${i.q}</b></td><td>${i.saldo}</td></tr>`;
+          html += `<tr${i.devendo ? ` class="parado"` : i.q ? ` class="hoje"` : ""}><td style="text-align:left">${i.n} · ${esc(i.desc)}${i.devendo ? `<br><small><b>Devendo ${i.devendo} casas</b>: não mede até a produção alcançar</small>` : ""}</td>
+            <td>${i.qtd}</td><td>${i.exec}</td><td>${i.ja}</td><td>${i.prev}</td><td><b>${i.q}</b></td><td>${i.saldo}</td></tr>`;
         }
       }
       $("nTab").innerHTML = html;
-      $("kTot").textContent = R.total; $("kIt").textContent = R.itens.filter(i => i.q).length; $("kAd").textContent = R.itens.filter(i => i.adiantado).length;
-      $("nTab").querySelectorAll("[data-prev]").forEach(x => x.onchange = () => { prev[x.dataset.prev] = x.value === "" ? null : +x.value; desenhar(); });
-      $("nTab").querySelectorAll("[data-aj]").forEach(x => x.onchange = () => { const n = x.dataset.aj; if (x.value === "" || +x.value === 0) delete aj[n]; else aj[n] = { q: +x.value, just: (aj[n] || {}).just || "" }; desenhar(); });
-      $("nTab").querySelectorAll("[data-just]").forEach(x => x.oninput = () => { aj[x.dataset.just].just = x.value; });
+      $("kTot").textContent = R.total; $("kIt").textContent = R.itens.filter(i => i.q).length; $("kAd").textContent = R.itens.filter(i => i.devendo).length;
+      $("nTab").querySelectorAll("[data-prev]").forEach(x => x.onchange = () => { prev[x.dataset.prev] = x.value === "" ? 0 : +x.value; desenhar(); });
     };
-    $("nData").onchange = desenhar; $("nPrev").onchange = desenhar;
+    $("nData").onchange = desenhar;
     $("nCan").onclick = () => abrirContrato(ct.id);
     $("nOk").onclick = async () => {
-      const semJust = R.itens.filter(i => i.aj && !(aj[i.n].just || "").trim());
-      if (semJust.length) { toast(`Escreva a justificativa do ajuste no item ${semJust[0].n}.`, false, true); return; }
       if (!confirm(`Fechar a ${ord(h.length + 1)} medição de ${fmt(data)} com ${R.total} casas-item? Depois de fechada, ela entra no histórico.`)) return;
       const itens = {};
-      R.itens.forEach(i => { itens[i.n] = { q: i.q, exec: i.exec, prev: i.prev, aj: i.aj, just: i.aj ? aj[i.n].just.trim() : "" }; });
-      h.push({ num: h.length + 1, data, prevAte, fechadaEm: new Date().toISOString(), listaVer: S.listaVer || 1, itens });
+      R.itens.forEach(i => { itens[i.n] = { q: i.q, exec: i.exec, prev: i.prev }; });
+      h.push({ num: h.length + 1, data, fechadaEm: new Date().toISOString(), listaVer: S.listaVer || 1, itens });
       sv();
       await boletim(ct, h.length); await salvarBackup();
       toast(`${ord(h.length)} medição fechada. Boletim e backup salvos em Downloads.`);
@@ -176,7 +157,7 @@
     add([{ v: "PLANILHA DE SERVIÇOS CONTRATADOS · BOLETIM DE MEDIÇÃO (QUANTIDADES)", s: 1 }]); merges.push(`A2:${col(nCol - 1)}2`);
     add([{ v: "OBRA:", s: 7 }, { v: "Paranavaí · Fase 1", s: 8 }]);
     add([{ v: "CONTRATADA:", s: 7 }, { v: ct.fornecedor + (ct.contrato ? " - " + ct.contrato : " - contrato a definir"), s: 8 }]);
-    add([{ v: "MEDIÇÃO:", s: 7 }, { v: `${ord(cur.num)} · data ${fmt(cur.data)} · previsão de execução até ${fmt(cur.prevAte)}`, s: 8 }]);
+    add([{ v: "MEDIÇÃO:", s: 7 }, { v: `${ord(cur.num)} · data ${fmt(cur.data)}`, s: 8 }]);
     add([]);
     const hdr = [{ v: "Código CT", s: 2 }, { v: "Serviços", s: 2 }, { v: "Unid.", s: 2 }, { v: "Quant.", s: 2 }];
     h.forEach(m => hdr.push({ v: `${ord(m.num)} Medição\n${fmt(m.data)}`, s: m === cur ? 9 : 2 }));
