@@ -139,9 +139,10 @@
       cx = setCell(cx, ref, 'n', val);
       cx = cx.replace(/(<f>[^<]*?)TODAY\(\)/g, (a, b) => b + '$' + tm[1] + '$' + tm[2]).replace(/(<f>[^<]*?)TODAY\(\)/g, (a, b) => b + '$' + tm[1] + '$' + tm[2]);
     }
-    // linhas de serviço: da linha 7 até a última com nome de aba
+    // linhas de serviço: da linha 7 até a última com célula na coluna da aba (linhas que sobrarem ficam ocultas)
     let last = hdrRow;
-    for (const m of cx.matchAll(new RegExp('<c r="' + C.aba + '(\\d+)"', 'g'))) if (+m[1] > hdrRow && textOf(cx, C.aba + m[1], shared)) last = Math.max(last, +m[1]);
+    for (const m of cx.matchAll(new RegExp('<c r="' + C.aba + '(\\d+)"', 'g'))) if (+m[1] > hdrRow) last = Math.max(last, +m[1]);
+    const ocultar = (r, h) => { cx = cx.replace(new RegExp('<row r="' + r + '"([^>]*?)(/?)>'), (a, b, f) => '<row r="' + r + '"' + b.replace(/ hidden="\d"/, '') + (h ? ' hidden="1"' : '') + f + '>'); };
     if (opts.servicos.length > last - hdrRow) throw new Error(`A CAPA tem ${last - hdrRow} linhas de serviço e o app tem ${opts.servicos.length}. Inclua linhas na CAPA do modelo.`);
     for (let i = 0; i < last - hdrRow; i++) {
       const r = hdrRow + 1 + i, sv = opts.servicos[i];
@@ -151,8 +152,10 @@
         const an = Array.isArray(sv.ant) ? sv.ant : (sv.ant ? [sv.ant] : []);
         if (C.ant) cx = an.length > 1 ? setCell(cx, C.ant + r, 's', an.join(' E ')) : an.length ? setCell(cx, C.ant + r, 'n', an[0]) : setCell(cx, C.ant + r, 'x');
         cx = setCell(cx, C.aba + r, 's', sv.aba);
+        ocultar(r, false);
       } else {
         [C.num, C.nome, C.ant, C.aba].filter(Boolean).forEach(c => cx = setCell(cx, c + r, 'x'));
+        ocultar(r, true);
       }
     }
     zip.file(capa.path, cx);
