@@ -5,17 +5,24 @@
 // Dados: S.efetivo[data] = {eq:[{emp,svc,n}], mq:[{dono,tipo,n}]}; cadastros em S.efCad.
 "use strict";
 (function () {
-  const PACA = "Pacaembu";
+  const PACA = "PACAEMBU";
   const PADRAO = {
     empresas: [],
     servicos: ["Rede de água", "Rede de esgoto", "Drenagem", "Terraplenagem", "Pavimentação", "Calçadas e rampas", "Ligações de água e esgoto", "Limpeza de obra"],
-    maquinas: ["Retroescavadeira", "Escavadeira", "Pá carregadeira", "Motoniveladora", "Rolo compactador", "Caminhão-pipa", "Caminhão basculante", "Caminhão munck", "Mini carregadeira"]
+    maquinas: ["Retroescavadeira", "Escavadeira", "Miniescavadeira", "Pá carregadeira", "Mini carregadeira", "Manipuladora", "Motoniveladora", "Rolo compactador", "Caminhão carga seca", "Caminhão basculante", "Caminhão-pipa", "Caminhão munck"]
   };
   let CONTR = [];
   const carregaContratos = async () => {
     try { const c = window.Medicao && await Medicao._contratos(); CONTR = [...new Set((c || []).map(x => x.fornecedor).filter(Boolean))]; } catch (e) { CONTR = []; }
   };
-  const cad = () => { if (!S.efCad) S.efCad = JSON.parse(JSON.stringify(PADRAO)); return S.efCad; };
+  const cad = () => {
+    if (!S.efCad) S.efCad = JSON.parse(JSON.stringify(PADRAO));
+    if (!S.efCad.maqV2) { // inclui as máquinas novas da lista padrão sem apagar as já cadastradas
+      PADRAO.maquinas.forEach(m => { if (!S.efCad.maquinas.some(x => x.toLowerCase() === m.toLowerCase())) S.efCad.maquinas.push(m); });
+      S.efCad.maqV2 = true;
+    }
+    return S.efCad;
+  };
   const empresas = () => [...new Set([...CONTR, ...cad().empresas])].filter(n => n.toLowerCase() !== PACA.toLowerCase()).sort((a, b) => a.localeCompare(b, "pt-BR"));
   const X = s => String(s ?? "").replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
   const somaDias = (d, n) => { const x = new Date(d + "T12:00"); x.setDate(x.getDate() + n); return x.toISOString().slice(0, 10); };
@@ -25,6 +32,7 @@
     const E = (S.efetivo = S.efetivo || {});
     for (const d in E) {
       const e = E[d];
+      (e.mq || []).forEach(x => { if (String(x.dono).toLowerCase() === "pacaembu") x.dono = PACA; });
       if (e.equipes || e.maquinas) {
         E[d] = { eq: (e.equipes || []).map(x => ({ emp: x.emp, svc: x.svc, n: (+x.eq || 0) * (+x.pes || 0) })),
                  mq: (e.maquinas || []).map(x => ({ dono: x.dono, tipo: x.tipo, n: +x.qtd || 0 })) };
@@ -85,7 +93,7 @@
     const optServ = emp => { const ja = e.eq.filter(x => x.emp === emp).map(x => x.svc);
       return `<option value="">+ frente de serviço…</option><optgroup label="Habitação (lista padrão)">${ativos().filter(s => !ja.includes(s.nome)).map(s => `<option>${X(s.nome)}</option>`).join("")}</optgroup>
         <optgroup label="Infra e outros">${cad().servicos.filter(n => !ja.includes(n)).map(n => `<option>${X(n)}</option>`).join("")}</optgroup>`; };
-    const optMaq = dono => { const ja = e.mq.filter(x => x.dono === dono).map(x => x.tipo); return `<option value="">+ máquina…</option>` + cad().maquinas.filter(n => !ja.includes(n)).map(n => `<option>${X(n)}</option>`).join(""); };
+    const optMaq = dono => { const ja = e.mq.filter(x => x.dono === dono).map(x => x.tipo); return `<option value="">+ máquina…</option>` + cad().maquinas.filter(n => !ja.includes(n)).map(n => `<option>${X(n)}</option>`).join("") + `<option value="__outra">Outra máquina (digitar)…</option>`; };
     const empSem = empresas().filter(n => !pe[n]), donoSem = [...empresas(), PACA].filter(n => !pm[n]);
     const somaGrupo = (k, idx) => idx.reduce((s, i) => s + e[k][i].n, 0);
     openSheet("Efetivo do dia", `${CSS}<div class="efw">${topo}
@@ -106,7 +114,19 @@
     $("fAnt").onclick = () => mudaDia(-1); $("fProx").onclick = () => mudaDia(1);
     B.querySelectorAll("[data-d]").forEach(b => b.onclick = () => { const x = e[b.dataset.k][+b.dataset.i]; x.n = Math.max(0, x.n + +b.dataset.d); save(); const st = B.scrollTop; tela(); $("sheetB").scrollTop = st; });
     B.querySelectorAll("[data-novo]").forEach(s => s.onchange = () => { if (!s.value) return; const ph = e.eq.find(x => x.emp === s.dataset.novo && !x.svc); if (ph) { ph.svc = s.value; ph.n = 1; } else e.eq.push({ emp: s.dataset.novo, svc: s.value, n: 1 }); save(); const st = B.scrollTop; tela(); $("sheetB").scrollTop = st; });
-    B.querySelectorAll("[data-novam]").forEach(s => s.onchange = () => { if (!s.value) return; e.mq.push({ dono: s.dataset.novam, tipo: s.value, n: 1 }); save(); const st = B.scrollTop; tela(); $("sheetB").scrollTop = st; });
+    B.querySelectorAll("[data-novam]").forEach(s => s.onchange = () => {
+      if (!s.value) return;
+      if (s.value === "__outra") {
+        const box = s.parentElement;
+        box.innerHTML = `<input class="search" placeholder="Nome da máquina" aria-label="Nome da máquina nova" style="flex:1;min-width:0"><button class="btn pri" style="flex:0 0 auto">OK</button>`;
+        const inp = box.querySelector("input"), ok = box.querySelector("button"); inp.focus();
+        const add = () => { const v = inp.value.trim(); if (!v) { inp.focus(); return; }
+          if (!cad().maquinas.some(m => m.toLowerCase() === v.toLowerCase())) cad().maquinas.push(v);
+          e.mq.push({ dono: s.dataset.novam, tipo: v, n: 1 }); save(); const st = B.scrollTop; tela(); $("sheetB").scrollTop = st; toast(`"${v}" incluída e salva na lista de máquinas`); };
+        ok.onclick = add; inp.onkeydown = ev => { if (ev.key === "Enter") add(); };
+        return;
+      }
+      e.mq.push({ dono: s.dataset.novam, tipo: s.value, n: 1 }); save(); const st = B.scrollTop; tela(); $("sheetB").scrollTop = st; });
     if ($("fEmp")) $("fEmp").onchange = ev => { const v = ev.target.value; if (!v) return; e.eq.push({ emp: v, svc: "", n: 0 }); save(); const st = B.scrollTop; tela(); $("sheetB").scrollTop = st; const s = document.querySelector(`[data-novo="${window.CSS.escape(v)}"]`); if (s) s.focus(); };
     if ($("fDono")) $("fDono").onchange = ev => { const v = ev.target.value; if (!v) return; e.mq.push({ dono: v, tipo: cad().maquinas[0] || "Máquina", n: 1 }); save(); const st = B.scrollTop; tela(); $("sheetB").scrollTop = st; };
     $("fRefaz").onclick = () => { const c = $("fRefaz"); if (c.dataset.ok) { delete ef()[d]; base = null; save(); tela(); } else { c.dataset.ok = 1; c.textContent = "Toque de novo para apagar o dia"; } };
@@ -176,13 +196,13 @@
     const C = cad(), ta = (id, l, v, h) => `<label class="f">${l}<textarea id="${id}" rows="${Math.min(10, Math.max(3, v.length + 1))}">${X(v.join("\n"))}</textarea></label>${h ? `<p class="msg">${h}</p>` : ""}`;
     openSheet("Efetivo: cadastros", `<p class="msg">Um nome por linha. Tirar um nome não apaga os dias já lançados.</p>
       <p class="msg"><b>Já aparecem sozinhas (contratos do app):</b> ${CONTR.length ? CONTR.map(X).join(", ") : "nenhuma"}.</p>
-      ${ta("cE", "Outras empresas terceiras (sem contrato no app)", C.empresas, "Ex.: empresa de infra. A Pacaembu não entra aqui: ela aparece só como dona de máquinas.")}
+      ${ta("cE", "Outras empresas terceiras (sem contrato no app)", C.empresas, "Ex.: empresa de infra. A PACAEMBU não entra aqui: ela aparece só como dona de máquinas.")}
       ${ta("cS", "Outros serviços (fora da lista padrão)", C.servicos, "Os serviços de habitação vêm da lista padrão do app.")}
       ${ta("cM", "Tipos de máquina", C.maquinas, "")}
       <div class="row"><button class="btn" id="cCan">Cancelar</button><button class="btn pri" id="cOk">Salvar</button></div>`);
     const lst = id => [...new Set($(id).value.split("\n").map(s => s.trim()).filter(Boolean))];
     $("cCan").onclick = abrirAjustes;
-    $("cOk").onclick = () => { S.efCad = { empresas: lst("cE").filter(n => n.toLowerCase() !== PACA.toLowerCase()), servicos: lst("cS"), maquinas: lst("cM") }; save(); toast("Cadastros do efetivo salvos"); abrirAjustes(); };
+    $("cOk").onclick = () => { S.efCad = { empresas: lst("cE").filter(n => n.toLowerCase() !== PACA.toLowerCase()), servicos: lst("cS"), maquinas: lst("cM"), maqV2: true }; save(); toast("Cadastros do efetivo salvos"); abrirAjustes(); };
   }
 
   window.Efetivo = { abrir, cadastros, _imagem: imagem };

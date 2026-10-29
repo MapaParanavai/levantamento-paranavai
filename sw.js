@@ -1,6 +1,6 @@
 // Guarda o app no celular para funcionar sem internet.
 // Página principal: tenta a internet primeiro (pega atualizações na hora) e usa a cópia guardada sem sinal.
-const V='levprod-v17';
+const V='levprod-v18';
 const ARQ=['./','index.html','export.js','jszip.min.js','mapa.json','mapa_dwg.json','modelo.js','medicao.js','contratos.json','logo.png','efetivo.js','manifest.webmanifest','icon-192.png','icon-512.png'];
 self.addEventListener('install',e=>{e.waitUntil(caches.open(V).then(c=>c.addAll(ARQ.map(u=>new Request(u,{cache:'reload'})))).then(()=>self.skipWaiting()))});
 self.addEventListener('activate',e=>{e.waitUntil(caches.keys().then(k=>Promise.all(k.filter(x=>x!==V).map(x=>caches.delete(x)))).then(()=>self.clients.claim()))});
