@@ -123,6 +123,7 @@ img.preview{width:100%;border:1px solid var(--line);border-radius:6px}
 </div>
 
 <nav class="bar">
+  <button id="btnEfetivo">Efetivo</button>
   <button id="btnResumo">Resumo</button>
   <button id="btnEnviar" class="pri">Enviar</button>
   <button id="btnMais">Ações</button>
@@ -352,6 +353,7 @@ function abrirResumo(){
   <p class="msg"><span class="sw hoje"></span> produção no dia &nbsp; <span class="sw parado"></span> em andamento sem produção</p>`);
 }
 $("btnResumo").onclick=abrirResumo;
+$("btnEfetivo").onclick=()=>window.Efetivo?Efetivo.abrir():toast("Efetivo indisponível. Abra o app com internet uma vez.",false,true);
 
 // ---------- imagem da CAPA ----------
 function imagemCapa(d){
@@ -458,9 +460,10 @@ function abrirAjustes(){
     <button class="item" id="aServ"><span>Serviços<br><small>Incluir, renomear, ordenar, desativar</small></span><small>${ativos().length} ativos</small></button>
     <button class="item" id="aMail"><span>E-mail<br><small>Destinatários e assunto padrão</small></span></button>
     <button class="item" id="aBk"><span>Transferir e backup<br><small>Enviar para o computador ou receber do celular</small></span></button>
+    <button class="item" id="aEf"><span>Efetivo: cadastros<br><small>Empresas terceiras, outros serviços e tipos de máquina</small></span></button>
     <button class="item" id="aMed"><span>Medição de prestadores<br><small>Medir contratos pela produção lançada (use no computador)</small></span></button>
     <p class="msg">Os lançamentos ficam salvos neste aparelho. A planilha enviada todo dia e o backup protegem contra perda do celular.</p>`);
-  $("aServ").onclick=abrirServEditor;$("aMail").onclick=abrirMail;$("aBk").onclick=abrirBackup;$("aMed").onclick=()=>window.Medicao?Medicao.abrir():toast("Medição indisponível. Abra o app com internet uma vez.",false,true);
+  $("aServ").onclick=abrirServEditor;$("aMail").onclick=abrirMail;$("aBk").onclick=abrirBackup;$("aEf").onclick=()=>window.Efetivo&&Efetivo.cadastros();$("aMed").onclick=()=>window.Medicao?Medicao.abrir():toast("Medição indisponível. Abra o app com internet uma vez.",false,true);
 }
 $("btnMais").onclick=abrirAjustes;
 function abrirMail(){
@@ -563,4 +566,5 @@ function abrirBackup(){
 })();
 </script>
 <script src="medicao.js"></script>
+<script src="efetivo.js"></script>
 </body></html>
