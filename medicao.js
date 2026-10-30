@@ -222,9 +222,8 @@
       const grupos = [...R.atvs.map(a => ({ a, its: R.itens.filter(i => i.atv === a) })), { a: null, its: R.itens.filter(i => !i.atv) }].filter(g => g.its.length);
       for (const g of grupos) {
         const A = g.a ? R.A[g.a] : null;
-        html += `<tr><td colspan="4" style="text-align:left;background:color-mix(in srgb,var(--navy) 10%,transparent)"><b>${A ? A.num + " · " + esc(A.nome) : "Sem atividade vinculada"}</b></td>
-          <td style="background:color-mix(in srgb,var(--navy) 10%,transparent)">${A ? `<input class="pv" type="number" min="0" data-prev="${A.num}" value="${A.prev || ""}" placeholder="0" aria-label="Previsão ${esc(A.nome)}">` : ""}</td>
-          <td colspan="2" style="background:color-mix(in srgb,var(--navy) 10%,transparent)"></td></tr>`;
+        html += `<tr><td colspan="4" style="text-align:left;background:color-mix(in srgb,var(--navy) 10%,transparent)"><b>${A ? A.num + " · " + esc(A.nome) : "Sem atividade vinculada"}</b>${A ? `<span style="margin-left:14px;white-space:nowrap;font-size:12px">Previsão p/ todos os itens: <input class="pv" type="number" min="0" data-prev="${A.num}" value="${A.prev || ""}" placeholder="0" aria-label="Previsão ${esc(A.nome)}"></span>` : ""}</td>
+          <td colspan="3" style="background:color-mix(in srgb,var(--navy) 10%,transparent)"></td></tr>`;
         for (const i of g.its) {
           const un = i.un !== "cs" ? ` ${esc(i.un)}` : "";
           html += i.manual
