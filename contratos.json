@@ -1,411 +1,450 @@
-[
- {
-  "id": "kvc-hidro",
-  "fornecedor": "KVC DA SILVA CONSTRUÇÕES",
-  "contrato": "",
-  "descricao": "Instalações hidrossanitárias",
-  "listaVer": 4,
-  "itens": [
-   {
-    "n": 1,
-    "grupo": "Instalações Hidráulicas Sob o Radier",
-    "desc": "M.O. Instalações Hidráulicas Sob o Radier",
-    "un": "cs",
-    "qtd": 686,
-    "fator": 1,
-    "cod": 52489,
-    "atv": 5
-   },
-   {
-    "n": 2,
-    "grupo": "Instalações Hidráulicas Sob o Radier",
-    "desc": "M.O. Limpeza do Serviço de Instalações Hidráulicas Sob o Radier",
-    "un": "cs",
-    "qtd": 686,
-    "fator": 1,
-    "cod": 52489,
-    "atv": 5
-   },
-   {
-    "n": 3,
-    "grupo": "Instalações Hidráulicas Sob o Radier",
-    "desc": "M.O. Montagem de Kit Hidráulicas Sob o Radier",
-    "un": "cs",
-    "qtd": 686,
-    "fator": 1,
-    "cod": 52489,
-    "atv": 4
-   },
-   {
-    "n": 4,
-    "grupo": "Instalações Hidráulicas Externas",
-    "desc": "M.O. Instalações das Tubulações Hidráulicas Externas",
-    "un": "cs",
-    "qtd": 686,
-    "fator": 1,
-    "cod": 52489,
-    "atv": 5
-   },
-   {
-    "n": 5,
-    "grupo": "Instalações Hidráulicas Externas",
-    "desc": "M.O. Limpeza do Serviço de Tubulações Hidráulicas Externas",
-    "un": "cs",
-    "qtd": 686,
-    "fator": 1,
-    "cod": 52489,
-    "atv": 5
-   },
-   {
-    "n": 6,
-    "grupo": "Instalações Hidráulicas Externas",
-    "desc": "M.O. Montagem de Kit Tubulações Hidráulicas Externas",
-    "un": "cs",
-    "qtd": 686,
-    "fator": 1,
-    "cod": 52489,
-    "atv": 4
-   },
-   {
-    "n": 7,
-    "grupo": "Instalações Hidráulicas da Alvenaria",
-    "desc": "M.O. Instalações Hidráulicas da Alvenaria",
-    "un": "cs",
-    "qtd": 686,
-    "fator": 1,
-    "cod": 52489,
-    "atv": 14
-   },
-   {
-    "n": 8,
-    "grupo": "Instalações Hidráulicas da Alvenaria",
-    "desc": "M.O. Colocação dos Registros Brutos",
-    "un": "cs",
-    "qtd": 686,
-    "fator": 1,
-    "cod": 52489,
-    "atv": 14
-   },
-   {
-    "n": 9,
-    "grupo": "Instalações Hidráulicas da Alvenaria",
-    "desc": "M.O. Limpeza do Serviço de Instalações Hidráulicas da Alvenaria",
-    "un": "cs",
-    "qtd": 686,
-    "fator": 1,
-    "cod": 52489,
-    "atv": 14
-   },
-   {
-    "n": 10,
-    "grupo": "Instalações Hidráulicas do Barrilete e Caixa D'água",
-    "desc": "M.O. Instalação da Caixa D'água",
-    "un": "cs",
-    "qtd": 686,
-    "fator": 1,
-    "cod": 52489,
-    "atv": 26
-   },
-   {
-    "n": 11,
-    "grupo": "Instalações Hidráulicas do Barrilete e Caixa D'água",
-    "desc": "M.O. Instalações Hidráulica do Barrilete",
-    "un": "cs",
-    "qtd": 686,
-    "fator": 1,
-    "cod": 52489,
-    "atv": 26
-   },
-   {
-    "n": 12,
-    "grupo": "Instalações Hidráulicas do Barrilete e Caixa D'água",
-    "desc": "M.O. Limpeza do Serviço de Instalações Hidráulicas do Barrilete e da Caixa D'água",
-    "un": "cs",
-    "qtd": 686,
-    "fator": 1,
-    "cod": 52489,
-    "atv": 26
-   },
-   {
-    "n": 13,
-    "grupo": "Cavalete Hidráulico",
-    "desc": "M.O. Execução da Base do Cavalete Hidráulico",
-    "un": "cs",
-    "qtd": 686,
-    "fator": 1,
-    "cod": 52489,
-    "atv": 77
-   },
-   {
-    "n": 14,
-    "grupo": "Cavalete Hidráulico",
-    "desc": "M.O. Revisão Geral de Instalações Hidráulicas (Teste)",
-    "un": "cs",
-    "qtd": 686,
-    "fator": 1,
-    "cod": 52489,
-    "atv": 81
-   },
-   {
-    "n": 15,
-    "grupo": "Cavalete Hidráulico",
-    "desc": "M.O. Instalações e Ligação do Cavalete Hidráulico",
-    "un": "cs",
-    "qtd": 686,
-    "fator": 1,
-    "cod": 52489,
-    "atv": 79
-   },
-   {
-    "n": 16,
-    "grupo": "Cavalete Hidráulico",
-    "desc": "M.O. Limpeza do Serviço de Execução e Instalação na Base e do Cavalete Hidráulico",
-    "un": "cs",
-    "qtd": 686,
-    "fator": 1,
-    "cod": 52489,
-    "atv": 79
-   },
-   {
-    "n": 17,
-    "grupo": "Instalações Sanitárias Sob o Radier",
-    "desc": "M.O. Instalações Sanitárias Sob o Radier",
-    "un": "cs",
-    "qtd": 686,
-    "fator": 1,
-    "cod": 52489,
-    "atv": 5
-   },
-   {
-    "n": 18,
-    "grupo": "Instalações Sanitárias Sob o Radier",
-    "desc": "M.O. Limpeza do Serviço de Instalações Sanitárias Sob o Radier",
-    "un": "cs",
-    "qtd": 686,
-    "fator": 1,
-    "cod": 52489,
-    "atv": 5
-   },
-   {
-    "n": 19,
-    "grupo": "Instalações Sanitárias Sob o Radier",
-    "desc": "M.O. Montagem de Kit Sanitárias Sob o Radier",
-    "un": "cs",
-    "qtd": 686,
-    "fator": 1,
-    "cod": 52489,
-    "atv": 4
-   },
-   {
-    "n": 20,
-    "grupo": "Instalações Sanitárias Externa",
-    "desc": "M.O. Instalação das Tubulações Sanitárias Externas",
-    "un": "cs",
-    "qtd": 686,
-    "fator": 1,
-    "cod": 52489,
-    "atv": 5
-   },
-   {
-    "n": 21,
-    "grupo": "Instalações Sanitárias Externa",
-    "desc": "M.O. Instalação das Caixas Sanitárias (Gordura e Passagem)",
-    "un": "cs",
-    "qtd": 686,
-    "fator": 1,
-    "cod": 52489,
-    "atv": 5
-   },
-   {
-    "n": 22,
-    "grupo": "Instalações Sanitárias Externa",
-    "desc": "M.O. Limpeza do Serviço de Instalações das Tubulações Sanitárias Externas e Caixas",
-    "un": "cs",
-    "qtd": 686,
-    "fator": 1,
-    "cod": 52489,
-    "atv": 5
-   },
-   {
-    "n": 23,
-    "grupo": "Instalações Sanitárias Externa",
-    "desc": "M.O. Montagem de Kit Tubulações Sanitárias Externas",
-    "un": "cs",
-    "qtd": 686,
-    "fator": 1,
-    "cod": 52489,
-    "atv": 4
-   },
-   {
-    "n": 24,
-    "grupo": "Instalações Sanitárias na Alvenaria",
-    "desc": "M.O. Instalação Tubulação Sanitária na Alvenaria",
-    "un": "cs",
-    "qtd": 686,
-    "fator": 1,
-    "cod": 52489,
-    "atv": 12
-   },
-   {
-    "n": 25,
-    "grupo": "Instalações Sanitárias na Alvenaria",
-    "desc": "M.O. Limpeza do Serviço de Instalações Sanitárias da Alvenaria",
-    "un": "cs",
-    "qtd": 686,
-    "fator": 1,
-    "cod": 52489,
-    "atv": 12
-   },
-   {
-    "n": 26,
-    "grupo": "Instalações Sanitárias Externa - Concessionária Local",
-    "desc": "M.O. Lacração das Caixas de Esgoto",
-    "un": "cs",
-    "qtd": 686,
-    "fator": 1,
-    "cod": 52489,
-    "atv": 68
-   },
-   {
-    "n": 27,
-    "grupo": "Instalações Sanitárias Externa - Concessionária Local",
-    "desc": "M.O. Instalação da Caixa de Inspeção Sanitária - Concessionária Local",
-    "un": "cs",
-    "qtd": 686,
-    "fator": 1,
-    "cod": 52489,
-    "atv": 67
-   },
-   {
-    "n": 28,
-    "grupo": "Instalações Sanitárias Externa - Concessionária Local",
-    "desc": "M.O. Limpeza do Serviço de Instalações da Caixa de Inspeção Sanitária - Concessionária Local",
-    "un": "cs",
-    "qtd": 686,
-    "fator": 1,
-    "cod": 52489,
-    "atv": 68
-   },
-   {
-    "n": 29,
-    "grupo": "Instalações Sanitárias Externa - Concessionária Local",
-    "desc": "M.O. Revisão Geral de Instalações Sanitárias (Teste)",
-    "un": "cs",
-    "qtd": 686,
-    "fator": 1,
-    "cod": 52489,
-    "atv": 68
-   },
-   {
-    "n": 30,
-    "grupo": "Aparelhos",
-    "desc": "M.O. Instalação do Suporte da Pia",
-    "un": "cs",
-    "qtd": 686,
-    "fator": 1,
-    "cod": 52489,
-    "atv": 50
-   },
-   {
-    "n": 31,
-    "grupo": "Aparelhos",
-    "desc": "M.O. Assentamento da Pia",
-    "un": "cs",
-    "qtd": 686,
-    "fator": 1,
-    "cod": 52489,
-    "atv": 50
-   },
-   {
-    "n": 32,
-    "grupo": "Aparelhos",
-    "desc": "M.O. Instalação do Tanque",
-    "un": "cs",
-    "qtd": 686,
-    "fator": 1,
-    "cod": 52489,
-    "atv": 55
-   },
-   {
-    "n": 33,
-    "grupo": "Aparelhos",
-    "desc": "M.O. Assentamento de Bacia e Caixa Acoplada",
-    "un": "cs",
-    "qtd": 686,
-    "fator": 1,
-    "cod": 52489,
-    "atv": 50
-   },
-   {
-    "n": 34,
-    "grupo": "Aparelhos",
-    "desc": "M.O. Instalação do Lavatório",
-    "un": "cs",
-    "qtd": 686,
-    "fator": 1,
-    "cod": 52489,
-    "atv": 50
-   },
-   {
-    "n": 35,
-    "grupo": "Aparelhos",
-    "desc": "M.O. Limpeza do Serviço de Instalação e Assentamento dos Aparelhos",
-    "un": "cs",
-    "qtd": 686,
-    "fator": 1,
-    "cod": 52489,
-    "atv": 50
-   },
-   {
-    "n": 36,
-    "grupo": "Aparelhos",
-    "desc": "M.O. Revisão Geral de Aparelhos",
-    "un": "cs",
-    "qtd": 686,
-    "fator": 1,
-    "cod": 52489,
-    "atv": 63
-   },
-   {
-    "n": 37,
-    "grupo": "Acabamentos Hidrossanitários e Acessórios do Banheiro",
-    "desc": "M.O. Colocação dos Acabamentos do Registros",
-    "un": "cs",
-    "qtd": 686,
-    "fator": 1,
-    "cod": 52489,
-    "atv": 53
-   },
-   {
-    "n": 38,
-    "grupo": "Acabamentos Hidrossanitários e Acessórios do Banheiro",
-    "desc": "M.O. Colocação Válvulas, Sifões",
-    "un": "cs",
-    "qtd": 686,
-    "fator": 1,
-    "cod": 52489,
-    "atv": 51
-   },
-   {
-    "n": 39,
-    "grupo": "Acabamentos Hidrossanitários e Acessórios do Banheiro",
-    "desc": "M.O. Instalação Torneiras",
-    "un": "cs",
-    "qtd": 686,
-    "fator": 1,
-    "cod": 52489,
-    "atv": 53
-   },
-   {
-    "n": 40,
-    "grupo": "Acabamentos Hidrossanitários e Acessórios do Banheiro",
-    "desc": "M.O. Limpeza do Serviço de Colocação dos Acabamentos e Acessórios",
-    "un": "cs",
-    "qtd": 686,
-    "fator": 1,
-    "cod": 52489,
-    "atv": 53
-   }
-  ]
- }
-]
+{
+ "versao": 2,
+ "escopos": [
+  {
+   "id": "hidro",
+   "descricao": "Instalações hidrossanitárias",
+   "itens": [
+    {
+     "n": 1,
+     "grupo": "Instalações Hidráulicas Sob o Radier",
+     "desc": "M.O. Instalações Hidráulicas Sob o Radier",
+     "un": "cs",
+     "fator": 1,
+     "cod": 52489,
+     "atv": 5
+    },
+    {
+     "n": 2,
+     "grupo": "Instalações Hidráulicas Sob o Radier",
+     "desc": "M.O. Limpeza do Serviço de Instalações Hidráulicas Sob o Radier",
+     "un": "cs",
+     "fator": 1,
+     "cod": 52489,
+     "atv": 5
+    },
+    {
+     "n": 3,
+     "grupo": "Instalações Hidráulicas Sob o Radier",
+     "desc": "M.O. Montagem de Kit Hidráulicas Sob o Radier",
+     "un": "cs",
+     "fator": 1,
+     "cod": 52489,
+     "atv": 4
+    },
+    {
+     "n": 4,
+     "grupo": "Instalações Hidráulicas Externas",
+     "desc": "M.O. Instalações das Tubulações Hidráulicas Externas",
+     "un": "cs",
+     "fator": 1,
+     "cod": 52489,
+     "atv": 5
+    },
+    {
+     "n": 5,
+     "grupo": "Instalações Hidráulicas Externas",
+     "desc": "M.O. Limpeza do Serviço de Tubulações Hidráulicas Externas",
+     "un": "cs",
+     "fator": 1,
+     "cod": 52489,
+     "atv": 5
+    },
+    {
+     "n": 6,
+     "grupo": "Instalações Hidráulicas Externas",
+     "desc": "M.O. Montagem de Kit Tubulações Hidráulicas Externas",
+     "un": "cs",
+     "fator": 1,
+     "cod": 52489,
+     "atv": 4
+    },
+    {
+     "n": 7,
+     "grupo": "Instalações Hidráulicas da Alvenaria",
+     "desc": "M.O. Instalações Hidráulicas da Alvenaria",
+     "un": "cs",
+     "fator": 1,
+     "cod": 52489,
+     "atv": 14
+    },
+    {
+     "n": 8,
+     "grupo": "Instalações Hidráulicas da Alvenaria",
+     "desc": "M.O. Colocação dos Registros Brutos",
+     "un": "cs",
+     "fator": 1,
+     "cod": 52489,
+     "atv": 14
+    },
+    {
+     "n": 9,
+     "grupo": "Instalações Hidráulicas da Alvenaria",
+     "desc": "M.O. Limpeza do Serviço de Instalações Hidráulicas da Alvenaria",
+     "un": "cs",
+     "fator": 1,
+     "cod": 52489,
+     "atv": 14
+    },
+    {
+     "n": 10,
+     "grupo": "Instalações Hidráulicas do Barrilete e Caixa D'água",
+     "desc": "M.O. Instalação da Caixa D'água",
+     "un": "cs",
+     "fator": 1,
+     "cod": 52489,
+     "atv": 26
+    },
+    {
+     "n": 11,
+     "grupo": "Instalações Hidráulicas do Barrilete e Caixa D'água",
+     "desc": "M.O. Instalações Hidráulica do Barrilete",
+     "un": "cs",
+     "fator": 1,
+     "cod": 52489,
+     "atv": 26
+    },
+    {
+     "n": 12,
+     "grupo": "Instalações Hidráulicas do Barrilete e Caixa D'água",
+     "desc": "M.O. Limpeza do Serviço de Instalações Hidráulicas do Barrilete e da Caixa D'água",
+     "un": "cs",
+     "fator": 1,
+     "cod": 52489,
+     "atv": 26
+    },
+    {
+     "n": 13,
+     "grupo": "Cavalete Hidráulico",
+     "desc": "M.O. Execução da Base do Cavalete Hidráulico",
+     "un": "cs",
+     "fator": 1,
+     "cod": 52489,
+     "atv": 77
+    },
+    {
+     "n": 14,
+     "grupo": "Cavalete Hidráulico",
+     "desc": "M.O. Revisão Geral de Instalações Hidráulicas (Teste)",
+     "un": "cs",
+     "fator": 1,
+     "cod": 52489,
+     "atv": 81
+    },
+    {
+     "n": 15,
+     "grupo": "Cavalete Hidráulico",
+     "desc": "M.O. Instalações e Ligação do Cavalete Hidráulico",
+     "un": "cs",
+     "fator": 1,
+     "cod": 52489,
+     "atv": 79
+    },
+    {
+     "n": 16,
+     "grupo": "Cavalete Hidráulico",
+     "desc": "M.O. Limpeza do Serviço de Execução e Instalação na Base e do Cavalete Hidráulico",
+     "un": "cs",
+     "fator": 1,
+     "cod": 52489,
+     "atv": 79
+    },
+    {
+     "n": 17,
+     "grupo": "Instalações Sanitárias Sob o Radier",
+     "desc": "M.O. Instalações Sanitárias Sob o Radier",
+     "un": "cs",
+     "fator": 1,
+     "cod": 52489,
+     "atv": 5
+    },
+    {
+     "n": 18,
+     "grupo": "Instalações Sanitárias Sob o Radier",
+     "desc": "M.O. Limpeza do Serviço de Instalações Sanitárias Sob o Radier",
+     "un": "cs",
+     "fator": 1,
+     "cod": 52489,
+     "atv": 5
+    },
+    {
+     "n": 19,
+     "grupo": "Instalações Sanitárias Sob o Radier",
+     "desc": "M.O. Montagem de Kit Sanitárias Sob o Radier",
+     "un": "cs",
+     "fator": 1,
+     "cod": 52489,
+     "atv": 4
+    },
+    {
+     "n": 20,
+     "grupo": "Instalações Sanitárias Externa",
+     "desc": "M.O. Instalação das Tubulações Sanitárias Externas",
+     "un": "cs",
+     "fator": 1,
+     "cod": 52489,
+     "atv": 5
+    },
+    {
+     "n": 21,
+     "grupo": "Instalações Sanitárias Externa",
+     "desc": "M.O. Instalação das Caixas Sanitárias (Gordura e Passagem)",
+     "un": "cs",
+     "fator": 1,
+     "cod": 52489,
+     "atv": 5
+    },
+    {
+     "n": 22,
+     "grupo": "Instalações Sanitárias Externa",
+     "desc": "M.O. Limpeza do Serviço de Instalações das Tubulações Sanitárias Externas e Caixas",
+     "un": "cs",
+     "fator": 1,
+     "cod": 52489,
+     "atv": 5
+    },
+    {
+     "n": 23,
+     "grupo": "Instalações Sanitárias Externa",
+     "desc": "M.O. Montagem de Kit Tubulações Sanitárias Externas",
+     "un": "cs",
+     "fator": 1,
+     "cod": 52489,
+     "atv": 4
+    },
+    {
+     "n": 24,
+     "grupo": "Instalações Sanitárias na Alvenaria",
+     "desc": "M.O. Instalação Tubulação Sanitária na Alvenaria",
+     "un": "cs",
+     "fator": 1,
+     "cod": 52489,
+     "atv": 12
+    },
+    {
+     "n": 25,
+     "grupo": "Instalações Sanitárias na Alvenaria",
+     "desc": "M.O. Limpeza do Serviço de Instalações Sanitárias da Alvenaria",
+     "un": "cs",
+     "fator": 1,
+     "cod": 52489,
+     "atv": 12
+    },
+    {
+     "n": 26,
+     "grupo": "Instalações Sanitárias Externa - Concessionária Local",
+     "desc": "M.O. Lacração das Caixas de Esgoto",
+     "un": "cs",
+     "fator": 1,
+     "cod": 52489,
+     "atv": 68
+    },
+    {
+     "n": 27,
+     "grupo": "Instalações Sanitárias Externa - Concessionária Local",
+     "desc": "M.O. Instalação da Caixa de Inspeção Sanitária - Concessionária Local",
+     "un": "cs",
+     "fator": 1,
+     "cod": 52489,
+     "atv": 67
+    },
+    {
+     "n": 28,
+     "grupo": "Instalações Sanitárias Externa - Concessionária Local",
+     "desc": "M.O. Limpeza do Serviço de Instalações da Caixa de Inspeção Sanitária - Concessionária Local",
+     "un": "cs",
+     "fator": 1,
+     "cod": 52489,
+     "atv": 68
+    },
+    {
+     "n": 29,
+     "grupo": "Instalações Sanitárias Externa - Concessionária Local",
+     "desc": "M.O. Revisão Geral de Instalações Sanitárias (Teste)",
+     "un": "cs",
+     "fator": 1,
+     "cod": 52489,
+     "atv": 68
+    },
+    {
+     "n": 30,
+     "grupo": "Aparelhos",
+     "desc": "M.O. Instalação do Suporte da Pia",
+     "un": "cs",
+     "fator": 1,
+     "cod": 52489,
+     "atv": 50
+    },
+    {
+     "n": 31,
+     "grupo": "Aparelhos",
+     "desc": "M.O. Assentamento da Pia",
+     "un": "cs",
+     "fator": 1,
+     "cod": 52489,
+     "atv": 50
+    },
+    {
+     "n": 32,
+     "grupo": "Aparelhos",
+     "desc": "M.O. Instalação do Tanque",
+     "un": "cs",
+     "fator": 1,
+     "cod": 52489,
+     "atv": 55
+    },
+    {
+     "n": 33,
+     "grupo": "Aparelhos",
+     "desc": "M.O. Assentamento de Bacia e Caixa Acoplada",
+     "un": "cs",
+     "fator": 1,
+     "cod": 52489,
+     "atv": 50
+    },
+    {
+     "n": 34,
+     "grupo": "Aparelhos",
+     "desc": "M.O. Instalação do Lavatório",
+     "un": "cs",
+     "fator": 1,
+     "cod": 52489,
+     "atv": 50
+    },
+    {
+     "n": 35,
+     "grupo": "Aparelhos",
+     "desc": "M.O. Limpeza do Serviço de Instalação e Assentamento dos Aparelhos",
+     "un": "cs",
+     "fator": 1,
+     "cod": 52489,
+     "atv": 50
+    },
+    {
+     "n": 36,
+     "grupo": "Aparelhos",
+     "desc": "M.O. Revisão Geral de Aparelhos",
+     "un": "cs",
+     "fator": 1,
+     "cod": 52489,
+     "atv": 63
+    },
+    {
+     "n": 37,
+     "grupo": "Acabamentos Hidrossanitários e Acessórios do Banheiro",
+     "desc": "M.O. Colocação dos Acabamentos do Registros",
+     "un": "cs",
+     "fator": 1,
+     "cod": 52489,
+     "atv": 53
+    },
+    {
+     "n": 38,
+     "grupo": "Acabamentos Hidrossanitários e Acessórios do Banheiro",
+     "desc": "M.O. Colocação Válvulas, Sifões",
+     "un": "cs",
+     "fator": 1,
+     "cod": 52489,
+     "atv": 51
+    },
+    {
+     "n": 39,
+     "grupo": "Acabamentos Hidrossanitários e Acessórios do Banheiro",
+     "desc": "M.O. Instalação Torneiras",
+     "un": "cs",
+     "fator": 1,
+     "cod": 52489,
+     "atv": 53
+    },
+    {
+     "n": 40,
+     "grupo": "Acabamentos Hidrossanitários e Acessórios do Banheiro",
+     "desc": "M.O. Limpeza do Serviço de Colocação dos Acabamentos e Acessórios",
+     "un": "cs",
+     "fator": 1,
+     "cod": 52489,
+     "atv": 53
+    }
+   ]
+  },
+  {
+   "id": "estrutura",
+   "descricao": "Estrutura, calçadas e acertos",
+   "itens": [
+    {
+     "n": 1,
+     "grupo": "Radier",
+     "desc": "M.O. Montagem e Concretagem do Radier",
+     "un": "cs",
+     "fator": 1,
+     "cod": 52489,
+     "atv": 6
+    },
+    {
+     "n": 2,
+     "grupo": "Radier",
+     "desc": "M.O. Limpeza do Serviço de Montagem e Concretagem do Radier",
+     "un": "cs",
+     "fator": 1,
+     "cod": 52489,
+     "atv": 6
+    },
+    {
+     "n": 3,
+     "grupo": "Laje Maciça de Concreto Armado",
+     "desc": "M.O. Montagem e Concretagem da Laje Maciça de Concreto Armado",
+     "un": "cs",
+     "fator": 1,
+     "cod": 52489,
+     "atv": 18
+    },
+    {
+     "n": 4,
+     "grupo": "Laje Maciça de Concreto Armado",
+     "desc": "M.O. Limpeza do Serviço de Concretagem e Regularização da Laje Maciça de Concreto Armado",
+     "un": "cs",
+     "fator": 1,
+     "cod": 52489,
+     "atv": 18
+    },
+    {
+     "n": 5,
+     "grupo": "Calçada em Concreto (Passeios)",
+     "desc": "M.O. Execução de Calçadas em Concreto (Incluso - Acerto de Terreno, Formas, Concretagem, Acabamento e Corte de Juntas de Dilatação)",
+     "un": "m²",
+     "fator": 1,
+     "cod": 52489,
+     "atv": null,
+     "manual": true
+    },
+    {
+     "n": 6,
+     "grupo": "Acerto do Terreno Inicial",
+     "desc": "M.O. Acerto do Terreno",
+     "un": "cs",
+     "fator": 1,
+     "cod": 52489,
+     "atv": 46
+    },
+    {
+     "n": 7,
+     "grupo": "Acerto de Terreno para Entrega",
+     "desc": "M.O. Acerto do Terreno (Entrega)",
+     "un": "cs",
+     "fator": 1,
+     "cod": 52489,
+     "atv": 86
+    },
+    {
+     "n": 8,
+     "grupo": "Dispositivos de Proteção e Segurança (EPC´s e Extintores)",
+     "desc": "M.O. Montagem de Linha de Vida",
+     "un": "cs",
+     "fator": 1,
+     "cod": 52489,
+     "atv": 16
+    }
+   ]
+  }
+ ]
+}

@@ -298,11 +298,13 @@ let undo=null,tt=null;
 function toggle(lotId){
   const s=svcById(S.atual),mk=marksOf(s.id),d=dia(),antes=mk[lotId],l=LOTIDX[lotId];
   if(antes)delete mk[lotId];else mk[lotId]=d;
+  if(window.Medicao){if(antes)Medicao.aoDesmarcar(s,lotId)}
   save();paint();
   const faltam=antes?[]:antsOf(s).filter(a=>!marksOf(a.id)[lotId]), falta=faltam.length>0;
   undo=()=>{if(antes)mk[lotId]=antes;else delete mk[lotId];save();paint()};
   const nome=`${l.q} · lote ${l.n}`+(l.pne?" (PNE)":"");
   toast(antes?`${nome}: desmarcado (era ${fmtC(antes)})`:`${nome}: ${s.nome} em ${fmtC(d)}`+(falta?` · sem ${nomesAnt(faltam)}!`:""),true,falta);
+  if(!antes&&window.Medicao)Medicao.aposMarcar(s,lotId);
 }
 function toast(t,canUndo,warn){$("toastTxt").textContent=t;$("toastUndo").hidden=!canUndo;const T=$("toast");T.classList.toggle("warn",!!warn);T.hidden=false;clearTimeout(tt);tt=setTimeout(()=>T.hidden=true,warn?6000:3500)}
 $("toastUndo").onclick=()=>{if(undo){undo();undo=null}$("toast").hidden=true};
@@ -333,7 +335,9 @@ $("btnSvc").onclick=abrirServicos;
 // ---------- resumo (mesma lógica da CAPA) ----------
 function uteis(a,b){let n=0;const d=new Date(a+"T12:00");const e=new Date(b+"T12:00");while(d<=e){const w=d.getDay();if(w&&w<6)n++;d.setDate(d.getDate()+1)}return n}
 function calc(d){
-  const ini=d.slice(0,8)+"01";const fim=new Date(+d.slice(0,4),+d.slice(5,7),0);const fimS=`${d.slice(0,8)}${String(fim.getDate()).padStart(2,"0")}`;
+  // mês de produção: do dia 26 ao dia 25
+  const dd=new Date(d+"T12:00"),y=dd.getFullYear(),m=dd.getMonth(),dia_=dd.getDate();const iso=x=>{x.setMinutes(x.getMinutes()-x.getTimezoneOffset());return x.toISOString().slice(0,10)};
+  const ini=iso(dia_>25?new Date(y,m,26,12):new Date(y,m-1,26,12)),fimS=iso(dia_>25?new Date(y,m+1,25,12):new Date(y,m,25,12));
   const tot=LOTS.length, du=Math.max(1,uteis(ini,d));
   const linhas=ativos().map(s=>{const v=Object.values(marksOf(s.id));const acum=v.length;
     const mes=v.filter(x=>x>=ini&&x<=fimS).length;return{s,dia:v.filter(x=>x===d).length,acum,pct:tot?acum/tot:0,mes,falta:tot-acum,media:Math.round(mes/du*10)/10}});
@@ -374,7 +378,7 @@ function imagemCapa(d){
   g.fillStyle="#fff";g.textAlign="center";g.font=`700 17px ${F}`;
   g.fillText("CONTROLE DE PRODUÇÃO DIÁRIA  ·  PARANAVAÍ  ·  FASE 1",xT+wT/2,yT+15);
   // informações
-  const info=[["Data do levantamento",fmt(d),true],["Total de casas",C.tot],["Dias úteis no mês",C.uteisMes],["Dias úteis restantes",C.restantes]];
+  const info=[["Data do levantamento",fmt(d),true],["Total de casas",C.tot],["Dias úteis no mês (26 a 25)",C.uteisMes],["Dias úteis restantes",C.restantes]];
   const iw=Wt/info.length;
   info.forEach(([k,v,dest],i)=>{const x=M+i*iw;
     g.fillStyle="#595959";g.font=`700 10px ${F}`;g.textAlign="left";g.fillText(k.toUpperCase(),x+4,yI+12);
@@ -537,7 +541,7 @@ function abrirBackup(){
     $("bConf").innerHTML=`<p class="msg">Arquivo gerado em <b>${quando}</b> com <b>${n}</b> lançamentos. Os dados deste aparelho serão substituídos por ele.</p>
       <div class="row"><button class="btn" id="bNo">Cancelar</button><button class="btn pri" id="bOk">Substituir dados</button></div>`;
     $("bNo").onclick=()=>{$("bConf").innerHTML="";e.target.value=""};
-    $("bOk").onclick=()=>{delete s._geradoEm;delete s._lanc;S=Object.assign(S,s);if(!svcById(S.atual))S.atual=ativos()[0]?.id;save();paint();
+    $("bOk").onclick=()=>{delete s._geradoEm;delete s._lanc;if(!s.prest&&S.prest){s.prest=S.prest;s.quem=S.quem}if(!s.efCad&&S.efCad)s.efCad=S.efCad;S=Object.assign(S,s);if(!svcById(S.atual))S.atual=ativos()[0]?.id;save();paint();
       $("bConf").innerHTML="";$("bMsg").textContent=`Dados recebidos: ${n} lançamentos. Agora é só usar Enviar.`};
   };
 }
@@ -550,7 +554,17 @@ function abrirBackup(){
   load();
   // lista de serviços nova (listaVer): guarda cópia dos dados antigos e recomeça com a lista padrão
   const LV=MAPA.listaVer||1;let novaLista=false;
-  if(S.servicos.length&&(S.listaVer||1)!==LV){try{localStorage.setItem(KEY+"-antes-lista"+LV,JSON.stringify(S))}catch(e){}
+  if(S.servicos.length&&(S.listaVer||1)>=4&&(S.listaVer||1)!==LV){ // lista nova: casa as atividades pelo nome e mantém os lançamentos
+    try{localStorage.setItem(KEY+"-antes-lista"+LV,JSON.stringify(S))}catch(e){}
+    const velhos=S.servicos,porNome=Object.fromEntries(velhos.map(x=>[x.nome,x])),extras=velhos.filter(x=>!/^s\d+$/.test(x.id));
+    const novos=MAPA.servicos.map(x=>({id:"s"+x.num,num:x.num,nome:x.nome,aba:String(x.aba).toUpperCase(),ant:x.ant||null,ativo:porNome[x.nome]?porNome[x.nome].ativo:true}));
+    const marks={},numNovo={};novos.forEach(n=>{const v=porNome[n.nome];if(v){if(S.marks[v.id])marks[n.id]=S.marks[v.id];numNovo[v.num]=n.num}});
+    extras.forEach(x=>{if(S.marks[x.id])marks[x.id]=S.marks[x.id]});
+    if(S.quem)for(const e in S.quem){const q={};for(const a in S.quem[e])if(numNovo[a])q[numNovo[a]]=S.quem[e][a];S.quem[e]=q}
+    const atualNome=(svcById(S.atual)||{}).nome;S.servicos=novos.concat(extras);S.marks=marks;
+    S.atual=(S.servicos.find(x=>x.nome===atualNome)||S.servicos[0]).id;S.listaVer=LV;save();
+    setTimeout(()=>toast("Lista de serviços atualizada. Os lançamentos foram mantidos."),800)}
+  else if(S.servicos.length&&(S.listaVer||1)!==LV){try{localStorage.setItem(KEY+"-antes-lista"+LV,JSON.stringify(S))}catch(e){}
     S.servicos=[];S.marks={};S.atual=null;novaLista=true}
   S.listaVer=LV;
   if(!S.servicos.length){S.servicos=MAPA.servicos.map(s=>({id:"s"+s.num,num:s.num,nome:s.nome,aba:String(s.aba).toUpperCase(),ant:s.ant||null,ativo:true}));

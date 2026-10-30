@@ -13,7 +13,7 @@
   };
   let CONTR = [];
   const carregaContratos = async () => {
-    try { const c = window.Medicao && await Medicao._contratos(); CONTR = [...new Set((c || []).map(x => x.fornecedor).filter(Boolean))]; } catch (e) { CONTR = []; }
+    try { CONTR = window.Medicao ? await Medicao.fornecedores() : []; } catch (e) { CONTR = []; }
   };
   const cad = () => {
     if (!S.efCad) S.efCad = JSON.parse(JSON.stringify(PADRAO));
