@@ -255,7 +255,7 @@ function buildMapDWG(){
   const P=pts=>pts.map(p=>p.join(",")).join(" ");
   el("rect",{x:0,y:0,width:W,height:H,fill:"#E9ECEF"},vp);
   const HC={verde:"#B9DCB0",inst:"#C9A27E",com:"#F6C6CC"};
-  const gB=el("g",{fill:"#F7F8F9",stroke:"#CDD3DA","stroke-width":.25},vp),gH=el("g",{},vp),gL=el("g",{stroke:"#5A6B85","stroke-width":.3,"stroke-linejoin":"round"},vp);
+  const gB=el("g",{fill:"#F7F8F9",stroke:"#CDD3DA","stroke-width":.25},vp),gH=el("g",{},vp),gL=el("g",{stroke:"#33465E","stroke-width":.4,"stroke-linejoin":"round"},vp);
   const gT=el("g",{"font-family":"Barlow Condensed, Arial Narrow, sans-serif","text-anchor":"middle","dominant-baseline":"central"},vp);
   for(const [k,pts] of D.hat) el("polygon",{points:P(pts),fill:HC[k]||"#ddd"},gH);
   for(const pts of D.bg) el("polygon",{points:P(pts)},gB);
@@ -266,7 +266,7 @@ function buildMapDWG(){
     const casa=l.st==="casa"||l.st==="pne";
     const pg=el("polygon",{points:P(l.p),fill:ST[l.st]||"#fff"},gL);
     const [cx,cy]=l.c, n=l.id.split("-")[1];
-    const ln=el("text",{x:cx,y:casa?cy-1.3:cy,"font-size":2.6,fill:"#013244","font-weight":700,class:"ln"},gT);ln.textContent=n;
+    const ln=el("text",{x:cx,y:casa?cy-1.3:cy,"font-size":3.4,fill:"#013244","font-weight":700,class:"ln"},gT);ln.textContent=n;
     if(!casa)continue;
     pg.dataset.lot=l.id;ln.dataset.lot=l.id;
     const dt=el("text",{x:cx,y:cy+1.7,"font-size":2.3,fill:"#123","font-weight":600,class:"dt"},gT);dt.dataset.lot=l.id;
@@ -274,7 +274,7 @@ function buildMapDWG(){
     lotEls[l.id]={inp:pg,t:dt,wn,ln};
   }
   for(const [n,x,y,f1] of D.quad){
-    const t=el("text",{x,y,"font-size":f1?8:5,fill:f1?"#013244":"#A5AEB9","fill-opacity":f1?.9:1,"font-weight":700,class:"ql","stroke-width":f1?2:1.2},gT);t.textContent=n}
+    const t=el("text",{x,y,"font-size":f1?13:6,fill:f1?"#013244":"#8A95A3","font-weight":700,class:"ql","stroke-width":f1?1.6:.8},gT);t.textContent=n}
 }
 function paint(){
   const s=svcById(S.atual);if(!s)return;
@@ -291,7 +291,7 @@ function paint(){
   $("svcNome").textContent=s.nome;
   $("svcCont").innerHTML=`${tot}/${LOTS.length}`+(nd?` <em>+${nd}</em>`:"");
 }
-function applyView(){$("vp").setAttribute("transform",`translate(${view.tx},${view.ty}) scale(${view.s})`);const px=view.s*LOTW;mapEl.classList.toggle("mid",px>10);mapEl.classList.toggle("near",px>22)}
+function applyView(){$("vp").setAttribute("transform",`translate(${view.tx},${view.ty}) scale(${view.s})`);const px=view.s*LOTW;mapEl.classList.toggle("mid",px>7);mapEl.classList.toggle("near",px>22)}
 function fitAlto(){const r=$("map").getBoundingClientRect();const s=Math.min(r.height/H,Math.max(r.width/W,r.height/H));view={s,tx:W*s>r.width?8:(r.width-W*s)/2,ty:(r.height-H*s)/2};applyView()}
 function fit(){const r=$("map").getBoundingClientRect();const s=Math.min(r.width/W,r.height/H)*.98;view={s,tx:(r.width-W*s)/2,ty:(r.height-H*s)/2};applyView()}
 function zoomAt(f,cx,cy){const ns=Math.max(fitScale()*.8,Math.min(view.s*f,8));view.tx=cx-(cx-view.tx)*ns/view.s;view.ty=cy-(cy-view.ty)*ns/view.s;view.s=ns;applyView()}
@@ -446,7 +446,7 @@ async function gerarArquivos(){
   if(!MODELO){const bin=atob(window.MODELO_B64);MODELO=new Uint8Array(bin.length);for(let i=0;i<bin.length;i++)MODELO[i]=bin.charCodeAt(i)}
   const servicos=ativos().map(s=>({num:s.num,nome:s.nome,aba:s.aba,ant:s.ant}));
   const marks={};ativos().forEach(s=>marks[s.aba]=marksOf(s.id));
-  const zip=await MapaExport.gerar(JSZip,MODELO,{data:d,servicos,lots:LOTS,marks,soComDados:!S.email.todasAbas});
+  const zip=await MapaExport.gerar(JSZip,MODELO,{data:d,servicos,lots:LOTS,m2:[...M2Q],marks,soComDados:!S.email.todasAbas});
   const xb=await zip.generateAsync({type:"blob",compression:"DEFLATE",compressionOptions:{level:9},mimeType:"application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"});
   const img=await imagemCapa(d);
   const nm=`Mapa_Producao_Fase_1_${d}`;

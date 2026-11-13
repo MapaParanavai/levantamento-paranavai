@@ -81,6 +81,13 @@
     let base = await rd(modelo.path);
     base = base.replace(/<legacyDrawing\b[^>]*\/>/g, '').replace(/ tabSelected="1"/g, '');
     base = setCell(base, 'B5', 'n', val);
+    // Módulo 2: conta as casas das quadras do módulo 2 (EA5) e o total delas (EB5); Módulo 1 = total - módulo 2
+    if (opts.m2 && opts.m2.length) {
+      const m2 = new Set(opts.m2), refs = opts.lots.filter(l => m2.has(l.q) && l.inp).map(l => l.inp);
+      const parts = []; for (let i = 0; i < refs.length; i += 200) parts.push('COUNT(' + refs.slice(i, i + 200).join(',') + ')');
+      base = setCell(base, 'EA5', 'f', parts.length ? parts.join('+') : '0');
+      base = setCell(base, 'EB5', 'n', refs.length);
+    }
 
     // remove abas de serviço que já existam no modelo (serão recriadas com os dados do app)
     const nomesServ = new Set(opts.servicos.map(s => s.aba.toUpperCase()));

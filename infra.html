@@ -163,6 +163,7 @@ tr.hoje td{background:color-mix(in srgb,var(--today) 14%,transparent)}
 .vb button.d{background:var(--done);color:#fff;border-color:var(--done)}.vb button.h{background:var(--today);color:#fff;border-color:var(--today)}
 .vb button small{display:block;font-weight:500;opacity:.85}
 .vnote{font-size:12px;color:var(--muted);max-width:720px}
+.grp th.gh{text-align:center;border-left:2px solid var(--surface)}.grp td.gs,.grp th.gs{border-left:2px solid var(--line)}
 .rowc{display:flex;gap:6px;flex-wrap:wrap}
 .chk{display:flex;gap:6px;align-items:center;font-size:12px;color:var(--muted)}
 </style></head><body>
@@ -210,8 +211,7 @@ tr.hoje td{background:color-mix(in srgb,var(--today) 14%,transparent)}
 <div class="sheet" id="sRes" hidden><div>
   <h3>Pavimento · resumo <button class="btn sec" id="cRes">Fechar</button></h3>
   <div class="note" id="rData"></div>
-  <h2 style="margin-top:10px">Loteamento · Módulo 1</h2><div class="tw"><table id="rM1"></table></div>
-  <h2>Loteamento · Módulo 2</h2><div class="tw"><table id="rM2"></table></div>
+  <h2 style="margin-top:10px">Loteamento</h2><div class="tw"><table id="rLot" class="grp"></table></div>
   <h2>Via de acesso</h2><div class="tw"><table id="rV"></table></div>
   <p class="note">Áreas medidas no desenho do projeto (pranchas de acessibilidade) para controle de avanço. Via de acesso: quantidades do estudo de Sistema Viário. Meio-fio em metros por lado.</p>
   <div class="rowc" style="margin-top:12px"><button class="btn" id="bImg">Gerar imagem resumo</button><button class="btn sec" id="bBk">Backup</button><button class="btn sec" id="bRest">Restaurar backup</button><input type="file" id="fRest" accept=".txt,.json" hidden></div>
@@ -353,9 +353,15 @@ $("dia").onchange=paint;
 function calc(cam,d=$("dia").value||hojeISO){const b={M1:{proj:0,ac:0,hoje:0},M2:{proj:0,ac:0,hoje:0},V:{proj:0,ac:0,hoje:0}};
   for(const id in PC){const q=qtd(id,cam);if(!q)continue;const o=b[PC[id].bloco];o.proj+=q;const v=S.m[cam][id];if(v&&v<=d){o.ac+=q;if(v===d)o.hoje+=q}}
   const tot={proj:0,ac:0,hoje:0};Object.values(b).forEach(o=>{tot.proj+=o.proj;tot.ac+=o.ac;tot.hoje+=o.hoje});return{b,tot}}
+function tabLot(){
+  let h=`<tr><th>Camada</th><th>Un.</th><th>Realizado dia</th><th>Total</th><th>% total</th><th class="gs">Módulo 1</th><th>% Mód. 1</th><th class="gs">Módulo 2</th><th>% Mód. 2</th></tr>`;
+  return h+CAM.map(([k,n])=>{const c=calc(k).b,T={proj:c.M1.proj+c.M2.proj,ac:c.M1.ac+c.M2.ac,hoje:c.M1.hoje+c.M2.hoje},u=k==="mf"?"m":"m²",pc=o=>fmt(o.proj?o.ac/o.proj*100:0,1)+"%";
+    return`<tr class="${T.hoje?"hoje":""}"><td>${n}</td><td style="text-align:center">${u}</td><td>${T.hoje?fmt(T.hoje):"–"}</td><td>${fmt(T.ac)}</td><td>${pc(T)}</td><td class="gs">${fmt(c.M1.ac)}</td><td>${pc(c.M1)}</td><td class="gs">${fmt(c.M2.ac)}</td><td>${pc(c.M2)}</td></tr>`}).join("")}
+function tabVia(){return`<tr><th>Camada</th><th>Un.</th><th>Realizado dia</th><th>Total</th><th>% total</th><th>A executar</th></tr>`+CAM.map(([k,n])=>{const o=calc(k).b.V,u=k==="mf"?"m":"m²";
+  return`<tr class="${o.hoje?"hoje":""}"><td>${n}</td><td style="text-align:center">${u}</td><td>${o.hoje?fmt(o.hoje):"–"}</td><td>${fmt(o.ac)}</td><td>${fmt(o.proj?o.ac/o.proj*100:0,1)}%</td><td>${fmt(Math.max(0,o.proj-o.ac))}</td></tr>`}).join("")}
 function tabela(bl){const rows=CAM.map(([k,n])=>{const o=calc(k).b[bl],u=k==="mf"?"m":"m²";return`<tr class="${o.hoje?"hoje":""}"><td>${n}</td><td>${u}</td><td>${o.hoje?fmt(o.hoje):"–"}</td><td>${fmt(o.ac)}</td><td>${fmt(o.proj)}</td><td>${fmt(o.proj?o.ac/o.proj*100:0,1)}%</td></tr>`}).join("");
   return`<tr><th>Camada</th><th>Un.</th><th>Hoje</th><th>Acumulado</th><th>Total</th><th>%</th></tr>`+rows}
-$("bRes").onclick=()=>{const d=$("dia").value||hojeISO;$("rData").textContent="Data do levantamento: "+fmtD(d);$("rM1").innerHTML=tabela("M1");$("rM2").innerHTML=tabela("M2");$("rV").innerHTML=tabela("V");$("img").hidden=true;$("imgDica").hidden=true;$("sRes").hidden=false};
+$("bRes").onclick=()=>{const d=$("dia").value||hojeISO;$("rData").textContent="Data do levantamento: "+fmtD(d);$("rLot").innerHTML=tabLot();$("rV").innerHTML=tabVia();$("img").hidden=true;$("imgDica").hidden=true;$("sRes").hidden=false};
 $("cRes").onclick=()=>$("sRes").hidden=true;
 $("bBk").onclick=()=>{const blob=new Blob([JSON.stringify(S)],{type:"text/plain"});const f=new File([blob],`pavimento_${hojeISO}.txt`,{type:"text/plain"});
   if(navigator.canShare&&navigator.canShare({files:[f]}))navigator.share({files:[f],title:"Backup pavimento"}).catch(()=>{});else{const a=document.createElement("a");a.href=URL.createObjectURL(blob);a.download=f.name;a.click()}};
@@ -364,24 +370,41 @@ $("fRest").onchange=async e=>{const f=e.target.files[0];if(!f)return;try{const o
 
 // ---------- imagem resumo ----------
 const LOGO=new Image();LOGO.src="logo.png";
-$("bImg").onclick=()=>{const d=$("dia").value||hojeISO,W=1500,blocos=[["M1","MÓDULO 1"],["M2","MÓDULO 2"],["V","VIA DE ACESSO"]];
-  const rowH=40,H=176+blocos.length*(82+CAM.length*rowH)+60;const cv=document.createElement("canvas");cv.width=W;cv.height=H;const g=cv.getContext("2d");
-  const F='"Segoe UI",Inter,Arial,sans-serif';g.fillStyle="#fff";g.fillRect(0,0,W,H);
+$("bImg").onclick=()=>{const d=$("dia").value||hojeISO,W=1500,rowH=40,F='"Segoe UI",Inter,Arial,sans-serif';
+  const H=176+(34+50+CAM.length*rowH)+24+(34+50+CAM.length*rowH)+70;const cv=document.createElement("canvas");cv.width=W;cv.height=H;const g=cv.getContext("2d");
+  g.fillStyle="#fff";g.fillRect(0,0,W,H);
   try{g.drawImage(LOGO,32,30,160,160*LOGO.height/LOGO.width||50)}catch(e){}
   g.fillStyle="#013244";g.fillRect(210,32,W-242,62);g.fillStyle="#F8B706";g.fillRect(210,94,50,6);g.fillStyle="#DF062F";g.fillRect(260,94,W-292,6);
   g.fillStyle="#fff";g.font=`700 28px ${F}`;g.textAlign="center";g.fillText("CONTROLE DE PRODUÇÃO DIÁRIA  ·  PAVIMENTO  ·  PARANAVAÍ  ·  FASE 1",210+(W-242)/2,73);
   g.textAlign="left";g.fillStyle="#5b6b75";g.font=`600 17px ${F}`;g.fillText("DATA DO LEVANTAMENTO",40,138);g.fillStyle="#fff2cc";g.fillRect(270,116,180,36);g.fillStyle="#0000ff";g.font=`700 24px ${F}`;g.fillText(fmtD(d),285,143);
-  let y=176;const cols=[["CAMADA",330],["UN.",70],["REALIZADO NO DIA",190],["ACUMULADO",190],["TOTAL",190],["% EXECUTADO",340],["A EXECUTAR",116]];
-  blocos.forEach(([bk,nm])=>{g.textAlign="left";g.fillStyle="#013244";g.font=`700 19px ${F}`;g.fillText(nm,40,y+22);y+=34;let x=32;
-    g.fillStyle="#0E5A80";g.fillRect(32,y,W-64,30);g.fillStyle="#fff";g.font=`700 14px ${F}`;cols.forEach(([c,w])=>{g.textAlign="center";g.fillText(c,x+w/2,y+20);x+=w});y+=30;
-    CAM.forEach(([k,n],i)=>{const o=calc(k).b[bk],u=k==="mf"?"m":"m²",p=o.proj?o.ac/o.proj:0;if(i%2){g.fillStyle="#f3f6f8";g.fillRect(32,y,W-64,rowH)}x=32;
-      const v=[n,u,o.hoje?fmt(o.hoje):"-",fmt(o.ac),fmt(o.proj),null,fmt(Math.max(0,o.proj-o.ac))];
-      v.forEach((t,j)=>{const w=cols[j][1];if(j===2&&o.hoje){g.fillStyle="#C6E0B4";g.fillRect(x+4,y+3,w-8,rowH-6)}
-        if(j===5){g.fillStyle="#dde5ec";g.fillRect(x+12,y+15,w-110,10);g.fillStyle="#0E5A80";g.fillRect(x+12,y+15,(w-110)*Math.min(1,p),10);g.fillStyle="#0E5A80";g.font=`600 16px ${F}`;g.textAlign="right";g.fillText(fmt(p*100,1)+"%",x+w-12,y+26)}
-        else{g.fillStyle=j===0?"#013244":"#152530";g.font=`${j===0?700:500} 16px ${F}`;g.textAlign=j===0?"left":"center";g.fillText(t,j===0?x+12:x+w/2,y+26)}x+=w});
-      g.strokeStyle="#e3e8eb";g.beginPath();g.moveTo(32,y+rowH);g.lineTo(W-32,y+rowH);g.stroke();y+=rowH});y+=18});
-  g.textAlign="left";g.fillStyle="#5b6b75";g.font=`500 14px ${F}`;g.fillText("Loteamento: áreas medidas no desenho do projeto. Via de acesso: quantidades do estudo de Sistema Viário. Meio-fio em metros (por lado).",32,H-22);
-  g.fillStyle="#C6E0B4";g.fillRect(W-230,H-36,18,18);g.fillStyle="#5b6b75";g.fillText("produção no dia",W-205,H-22);
+  const txt=(s,x,y,al="center",wt=500,sz=16,c="#152530")=>{g.textAlign=al;g.font=`${wt} ${sz}px ${F}`;g.fillStyle=c;g.fillText(s,x,y)};
+  const bar=(x,y,w,p)=>{g.fillStyle="#dde5ec";g.fillRect(x,y,w,9);g.fillStyle="#0E5A80";g.fillRect(x,y,w*Math.min(1,p),9)};
+  let y=176;
+  // ---- loteamento: mesma sequência da Habitação
+  txt("LOTEAMENTO",40,y+22,"left",700,19,"#013244");y+=34;
+  const LC=[["CAMADA",250],["UN.",50],["REALIZADO\nDIA",130],["TOTAL",140],["%\nTOTAL",270],["MÓDULO 1",140],["%\nMÓD. 1",120],["MÓDULO 2",140],["%\nMÓD. 2",96]];
+  g.fillStyle="#0E5A80";g.fillRect(32,y,W-64,50);let lx=32;LC.forEach(([s,w])=>{const L=s.split("\n");L.forEach((q,i)=>txt(q,lx+w/2,y+(L.length>1?20+i*18:30),"center",700,13,"#fff"));lx+=w});y+=50;
+  CAM.forEach(([k,n],i)=>{const c=calc(k).b,T={proj:c.M1.proj+c.M2.proj,ac:c.M1.ac+c.M2.ac,hoje:c.M1.hoje+c.M2.hoje},u=k==="mf"?"m":"m²",pp=o=>o.proj?o.ac/o.proj:0;
+    if(i%2){g.fillStyle="#f3f6f8";g.fillRect(32,y,W-64,rowH)}let x=32;
+    txt(n,x+12,y+26,"left",600,16,"#152530");x+=250;txt(u,x+25,y+26);x+=50;
+    if(T.hoje){g.fillStyle="#C6E0B4";g.fillRect(x+6,y+4,118,rowH-8)}txt(T.hoje?fmt(T.hoje):"-",x+65,y+26,"center",T.hoje?700:500);x+=130;
+    txt(fmt(T.ac),x+70,y+26);x+=140;
+    bar(x+10,y+16,170,pp(T));txt(fmt(pp(T)*100,1)+"%",x+262,y+26,"right",500,15,"#152530");x+=270;
+    txt(fmt(c.M1.ac),x+70,y+26);x+=140;txt(fmt(pp(c.M1)*100,1)+"%",x+60,y+26);x+=120;
+    txt(fmt(c.M2.ac),x+70,y+26);x+=140;txt(fmt(pp(c.M2)*100,1)+"%",x+48,y+26);
+    g.strokeStyle="#e3e8eb";g.beginPath();g.moveTo(32,y+rowH);g.lineTo(W-32,y+rowH);g.stroke();y+=rowH});
+  y+=24;
+  // ---- via de acesso
+  txt("VIA DE ACESSO",40,y+22,"left",700,19,"#013244");y+=34;
+  const VC=[["CAMADA",250],["UN.",50],["REALIZADO\nDIA",130],["TOTAL",150],["%\nTOTAL",270],["A EXECUTAR",150]];
+  g.fillStyle="#0E5A80";g.fillRect(32,y,1040,50);let vx=32;VC.forEach(([s,w])=>{const L=s.split("\n");L.forEach((q,i)=>txt(q,vx+w/2,y+(L.length>1?20+i*18:30),"center",700,13,"#fff"));vx+=w});y+=50;
+  CAM.forEach(([k,n],i)=>{const o=calc(k).b.V,u=k==="mf"?"m":"m²",p=o.proj?o.ac/o.proj:0;if(i%2){g.fillStyle="#f3f6f8";g.fillRect(32,y,1040,rowH)}let x=32;
+    txt(n,x+12,y+26,"left",600,16,"#152530");x+=250;txt(u,x+25,y+26);x+=50;
+    if(o.hoje){g.fillStyle="#C6E0B4";g.fillRect(x+6,y+4,118,rowH-8)}txt(o.hoje?fmt(o.hoje):"-",x+65,y+26,"center",o.hoje?700:500);x+=130;
+    txt(fmt(o.ac),x+75,y+26);x+=150;bar(x+10,y+16,170,p);txt(fmt(p*100,1)+"%",x+262,y+26,"right",500,15,"#152530");x+=270;txt(fmt(Math.max(0,o.proj-o.ac)),x+75,y+26);
+    g.strokeStyle="#e3e8eb";g.beginPath();g.moveTo(32,y+rowH);g.lineTo(32+1040,y+rowH);g.stroke();y+=rowH});
+  txt("Loteamento: áreas medidas no desenho do projeto (controle de avanço). Via de acesso: quantidades do estudo de Sistema Viário. Meio-fio em metros por lado.",32,H-22,"left",500,14,"#5b6b75");
+  g.fillStyle="#C6E0B4";g.fillRect(W-230,H-36,18,18);txt("produção no dia",W-205,H-22,"left",500,14,"#5b6b75");
   $("img").src=cv.toDataURL("image/png");$("img").hidden=false;$("imgDica").hidden=false};
 
 show("vInfra",false);subInfo();
