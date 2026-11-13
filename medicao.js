@@ -19,6 +19,7 @@
         const j = await (await fetch("contratos.json")).json();
         ESC = Array.isArray(j) ? j.map(c => ({ id: c.id === "kvc-hidro" ? "hidro" : c.id, descricao: c.descricao, itens: c.itens })) : (j.escopos || []);
       } catch (e) { ESC = []; }
+      (S.escImp || []).forEach(e => { if (!ESC.some(x => x.id === e.id)) ESC.push(e); });
       migra();
     }
     return ESC;
@@ -115,16 +116,21 @@
   // ---------- telas ----------
   async function abrirMedicao() {
     const es = await escopos();
-    openSheet("Medição de prestadores", (es.length ? es.map(e => `<div class="grp">${esc(e.descricao)} · ${e.itens.length} itens</div>
+    openSheet("Medição de prestadores", `<div class="row"><button class="btn pri" id="mImp">Importar contrato (planilha Excel)</button></div><input type="file" id="mImpF" accept=".xlsx" hidden>
+      <p class="msg">Formulário padrão de contrato (aba "Planilha"). O app lê os itens, sugere o vínculo com as atividades e você confere antes de salvar. Para aditivo, use "Atualizar com aditivo" no contrato importado.</p>` + (es.length ? es.map(e => `<div class="grp">${esc(e.descricao)} · ${e.itens.length} itens</div>
       ${prestDe(e.id).map(p => { const h = meds(ckey(e.id, p.id)), u = h[h.length - 1];
         return `<div class="ed${p.ativo === false ? " off" : ""}"><span></span><div><b>${esc(p.nome)}</b><small>${p.contrato ? esc(p.contrato) + " · " : ""}${N(p.casas)} casas · ${(p.quadras || []).length} quadras${h.length ? ` · ${h.length} medições, última ${fmt(u.data)}` : ""}${p.ativo === false ? " · desativado" : ""}</small></div>
           <div class="acts"><button data-ed="${esc(e.id)}|${esc(p.id)}">Editar</button><button data-med="${esc(e.id)}|${esc(p.id)}"><b>Medir</b></button></div></div>`; }).join("") || `<p class="msg">Nenhum prestador vinculado.</p>`}
-      <div class="row"><button class="btn" data-novo="${esc(e.id)}">+ Vincular prestador</button></div>`).join("") : `<p class="msg err">Nenhum escopo encontrado. Abra o app com internet uma vez.</p>`) +
+      <div class="row"><button class="btn" data-novo="${esc(e.id)}">+ Vincular prestador</button>${e.importado ? `<button class="btn" data-adt="${esc(e.id)}">Atualizar com aditivo</button>` : ""}</div>`).join("") : `<p class="msg err">Nenhum escopo encontrado. Abra o app com internet uma vez.</p>`) +
       `<p class="msg">A medição usa a produção lançada neste aparelho. No computador, receba antes o arquivo do celular (Ações → Transferir e backup). Cadastre os prestadores no celular do levantamento, ou transfira depois para ele: é lá que o app pergunta quem executou nas quadras divididas.</p>`);
     const B = $("sheetB");
     B.querySelectorAll("[data-med]").forEach(b => b.onclick = () => { const [e, p] = b.dataset.med.split("|"); abrirContrato(e, p); });
     B.querySelectorAll("[data-ed]").forEach(b => b.onclick = () => { const [e, p] = b.dataset.ed.split("|"); editarPrest(e, p); });
     B.querySelectorAll("[data-novo]").forEach(b => b.onclick = () => editarPrest(b.dataset.novo, null));
+    B.querySelectorAll("[data-adt]").forEach(b => b.onclick = () => { $("mImpF").dataset.adt = b.dataset.adt; $("mImpF").click(); });
+    $("mImp").onclick = () => { delete $("mImpF").dataset.adt; $("mImpF").click(); };
+    $("mImpF").onchange = async ev => { const f = ev.target.files[0]; if (!f) return; const adt = ev.target.dataset.adt;
+      try { const c = await lerPlanilhaContrato(f); previaImport(c, adt || null); } catch (e) { toast("Não consegui ler a planilha: " + (e.message || e), false, true); } };
   }
 
   function editarPrest(eid, pid) {
@@ -348,6 +354,133 @@
     return new File([blob], nome, { type: blob.type });
   }
 
-  window.Medicao = { abrir: abrirMedicao, aposMarcar, aoDesmarcar, fornecedores, carregar: escopos, _calcular: calcular, _boletim: boletim, _MED: () => MED };
+
+  // ---------- importar contrato (formulário padrão da Paca ou modelo do app) ----------
+  const semAcento = s => String(s || "").normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase();
+  async function lerPlanilhaContrato(file) {
+    const zip = await JSZip.loadAsync(await file.arrayBuffer());
+    const txt = async p => { const f = zip.file(p); return f ? await f.async("string") : null; };
+    const dom = s => new DOMParser().parseFromString(s, "application/xml");
+    const wb = dom(await txt("xl/workbook.xml")), rels = dom(await txt("xl/_rels/workbook.xml.rels"));
+    const sheets = [...wb.getElementsByTagName("sheet")].map(s => ({ nome: s.getAttribute("name"), rid: s.getAttribute("r:id") || s.getAttributeNS("http://schemas.openxmlformats.org/officeDocument/2006/relationships", "id") }));
+    const alvo = sheets.find(s => semAcento(s.nome).trim() === "planilha") || sheets.find(s => semAcento(s.nome).trim() === "contrato") || sheets.find(s => /planilha|contrato/.test(semAcento(s.nome)));
+    if (!alvo) throw new Error('não achei a aba "Planilha"');
+    const rel = [...rels.getElementsByTagName("Relationship")].find(r => r.getAttribute("Id") === alvo.rid);
+    let path = rel.getAttribute("Target").replace(/^\/?xl\//, ""); path = "xl/" + path.replace(/^\//, "");
+    const ssx = await txt("xl/sharedStrings.xml"), SS = ssx ? [...dom(ssx).getElementsByTagName("si")].map(si => [...si.getElementsByTagName("t")].map(t => t.textContent).join("")) : [];
+    const sh = dom(await txt(path)), rows = {};
+    for (const c of sh.getElementsByTagName("c")) {
+      const ref = c.getAttribute("r"), m = ref.match(/^([A-Z]+)(\d+)$/), t = c.getAttribute("t");
+      const v = c.getElementsByTagName("v")[0], is = c.getElementsByTagName("is")[0];
+      let val = v ? v.textContent : (is ? is.textContent : "");
+      if (t === "s") val = SS[+val] || ""; else if (t !== "str" && t !== "inlineStr" && val !== "" && !isNaN(+val)) val = +val;
+      if (val === "" || val == null) continue;
+      (rows[+m[2]] = rows[+m[2]] || {})[m[1]] = typeof val === "string" ? val.trim() : val;
+    }
+    const nums = Object.keys(rows).map(Number).sort((a, b) => a - b);
+    const lbl = r => semAcento(Object.values(rows[r] || {}).filter(v => typeof v === "string").join(" "));
+    const campo = re => { for (const r of nums) { const o = rows[r], ks = Object.keys(o); const i = ks.findIndex(k => typeof o[k] === "string" && re.test(semAcento(o[k]))); if (i >= 0) { const v = ks.slice(i + 1).map(k => o[k]).find(v => v !== "" && v != null); if (v != null) return String(v).trim(); } } return ""; };
+    // blocos: linha de cabeçalho com "Serviços" e "Unid."
+    const blocos = [];
+    for (const r of nums) {
+      const o = rows[r], ks = Object.keys(o), col = re => ks.find(k => typeof o[k] === "string" && re.test(semAcento(o[k])));
+      const cS = col(/^servi/), cU = col(/^unid/);
+      if (!cS || !cU) continue;
+      const cQ = col(/^quant/), cC = col(/sienge|codigo ct|^cod/), cG = col(/^grupo/), cV = col(/vinculo/);
+      let titulo = ""; for (let k = r - 1; k >= r - 3; k--) if (rows[k]) { titulo = lbl(k); break; }
+      blocos.push({ r, titulo, cS, cU, cQ, cC, cG, cV });
+    }
+    if (!blocos.length) throw new Error("não achei a tabela de serviços (colunas Serviços / Unid. / Quant.)");
+    const lerBloco = (b, fim) => {
+      const itens = []; let grupo = "", grupo0 = "";
+      for (const r of nums) {
+        if (r <= b.r || r >= fim) continue;
+        const o = rows[r], d = o[b.cS], u = o[b.cU];
+        if (/^total/.test(semAcento(Object.values(o)[0]))) break;
+        if (d && !u) { if (!grupo0) grupo0 = d; grupo = d; continue; }
+        if (!d || !u) continue;
+        itens.push({ cod: b.cC ? o[b.cC] ?? "" : "", grupo: b.cG ? (o[b.cG] || grupo) : grupo, desc: d, un: semAcento(u).replace(/[.\s]/g, "") === "cs" ? "cs" : String(u).trim(), qtd: b.cQ && o[b.cQ] !== "" ? +o[b.cQ] || 0 : null, vinc: b.cV ? o[b.cV] : null });
+      }
+      return { itens, grupo0 };
+    };
+    const fimDe = i => i + 1 < blocos.length ? blocos[i + 1].r - 1 : 1e9;
+    let iB = blocos.findIndex(b => /consolidado/.test(b.titulo)), lido = iB >= 0 ? lerBloco(blocos[iB], fimDe(iB)) : null;
+    if (!lido || !lido.itens.length) { iB = blocos.findIndex(b => !/aditivo|consolidado/.test(b.titulo)); if (iB < 0) iB = 0; lido = lerBloco(blocos[iB], fimDe(iB)); }
+    if (!lido.itens.length) throw new Error("a tabela de serviços está vazia");
+    const nArq = (file.name.match(/(?:CT)?\d{3}[A-Z]\d{4}/i) || [])[0] || "";
+    return { arquivo: file.name, obra: campo(/^obra\b/), contratada: campo(/^contratada/), contrato: campo(/n.? ?do contrato|^contrato n/) || nArq, escopo: campo(/^escopo/) || lido.grupo0 || "Contrato", fonte: /consolidado/.test(blocos[iB].titulo) ? "consolidado" : "contrato", itens: lido.itens };
+  }
+  // sugestão de vínculo pelo nome
+  const PARE = new Set("servico servicos de da do das dos e na no nas nos em com sem material materiais mo m o aplicacao execucao para a o as os por - x".split(" "));
+  const SIN = { latex: "pintu", tinta: "pintu", pintura: "pintu", acrilica: "", acrilico: "", completa: "", geral: "" };
+  const FRACO = new Set(["inter", "exter", "casas", "casa"]);
+  const toks = s => semAcento(s).replace(/[^a-z0-9 ]/g, " ").split(/\s+/).filter(w => w.length > 2 && !PARE.has(w)).map(w => (w in SIN ? SIN[w] : w)).filter(Boolean).map(w => w.slice(0, 5));
+  const MANUAL_RE = /revis|retrabalho|repintura|teste|ensaio de estanq|vistoria/;
+  function sugerir(it) {
+    if (it.vinc) { const n = parseInt(String(it.vinc), 10); if (n && svcNum(n)) return { atv: n, conf: "planilha" }; if (/manual/i.test(String(it.vinc))) return { atv: null, conf: "planilha" }; }
+    if (MANUAL_RE.test(semAcento(it.desc))) return { atv: null, conf: "regra" };
+    const T = new Set(toks(it.desc)), G = new Set(toks(it.grupo));
+    let best = null;
+    for (const s of S.servicos) {
+      const A = toks(s.nome); if (!A.length) continue;
+      let hit = 0, hitG = 0, forte = 0, tot = 0; A.forEach(w => { const p = FRACO.has(w) ? 0.4 : 1; tot += p; if (T.has(w)) { hit += p; if (p === 1) forte++; } else if (G.has(w)) hitG += p * 0.6; });
+      const sc = forte ? (hit + hitG) / tot : 0;
+      if (!best || sc > best.sc) best = { sc, atv: s.num };
+    }
+    if (best && best.sc >= 0.99) return { atv: best.atv, conf: "alta" };
+    if (best && best.sc >= 0.5) return { atv: best.atv, conf: "conferir" };
+    return { atv: null, conf: "sem" };
+  }
+  function previaImport(c, adtId) {
+    const base = adtId ? ESC.find(e => e.id === adtId) : null;
+    const chave = i => (i.cod ? "c" + i.cod : "") + "|" + semAcento(i.desc).replace(/\s+/g, " ");
+    const velho = base ? Object.fromEntries(base.itens.map(i => [chave(i), i])) : {};
+    const L = c.itens.map(i => { const v = velho[chave(i)]; const s = v ? { atv: v.atv || null, conf: "mantido" } : sugerir(i); return { ...i, atv: s.atv, conf: s.conf, velho: v || null }; });
+    const removidos = base ? base.itens.filter(i => !L.some(x => x.velho === i)) : [];
+    const opts = `<option value="">MANUAL (sem vínculo)</option>` + S.servicos.map(s => `<option value="${s.num}">${s.num} - ${esc(s.nome)}</option>`).join("");
+    const tag = x => x.velho ? (x.velho.un !== "cs" && +x.velho.qtd !== +x.qtd ? `<b style="color:#c4691a">quantidade alterada (${x.velho.qtd ?? "–"} → ${x.qtd})</b>` : "sem alteração") : (base ? `<b style="color:#2e7d4f">item novo</b>` : ({ alta: "✅ sugestão", conferir: "⚠️ conferir", sem: "❓ escolha", regra: "manual (revisão/retrabalho)", planilha: "da planilha" }[x.conf] || ""));
+    openSheet(base ? "Atualizar contrato (aditivo)" : "Importar contrato", `
+      <p class="msg">${esc(c.arquivo)} · ${L.length} itens · lido do bloco <b>${c.fonte === "consolidado" ? "CONSOLIDADO" : "CONTRATO"}</b>${c.obra ? " · obra: " + esc(c.obra) : ""}</p>
+      ${base ? `<p class="msg">${esc(base.descricao)}: itens com medição nunca são apagados. Quantidades e itens novos entram; o histórico do item guarda o valor anterior.</p>` : `
+      <label class="f">Escopo<input id="iEsc" value="${esc(c.escopo)}"></label>
+      <label class="f">Prestador (em branco = A DEFINIR)<input id="iPr" value="${esc(c.contratada)}"></label>
+      <label class="f">Nº do contrato<input id="iCt" value="${esc(c.contrato)}"></label>`}
+      <div class="grp">Itens e vínculo com as atividades do mapa</div>
+      <p class="msg">"cs" = por casa: o app mede pelas casas executadas na atividade. MANUAL = você digita a quantidade na medição.</p>
+      <div id="iLst" style="display:grid;gap:8px"></div>
+      ${removidos.length ? `<p class="msg">${removidos.length} item(ns) do contrato atual não estão na planilha nova e serão mantidos (não se apaga item).</p>` : ""}
+      <p class="msg err" id="iErr" hidden></p>
+      <div class="row"><button class="btn" id="iCan">Cancelar</button><button class="btn pri" id="iOk">${base ? "Aplicar aditivo" : "Importar"}</button></div>`);
+    let g0 = null;
+    $("iLst").innerHTML = L.map((x, k) => { const gh = x.grupo !== g0 ? `<div class="grp" style="margin-top:6px">${esc(x.grupo || "")}</div>` : ""; g0 = x.grupo;
+      return gh + `<div style="border:1px solid var(--line);border-radius:8px;padding:8px;display:grid;gap:6px;background:var(--surface)">
+        <div style="font-size:13px"><b>${esc(x.desc)}</b><br><small style="color:var(--muted)">${x.cod ? "Cód. " + esc(x.cod) + " · " : ""}${esc(x.un)} · ${x.qtd ?? "–"} · ${tag(x)}</small></div>
+        <select data-k="${k}" style="font:14px var(--f-body);padding:6px;border:1px solid var(--line);border-radius:8px;background:var(--bg);color:var(--ink)">${opts}</select></div>`; }).join("");
+    $("iLst").querySelectorAll("select").forEach(s => { s.value = L[+s.dataset.k].atv || ""; s.onchange = () => { L[+s.dataset.k].atv = s.value ? +s.value : null; }; });
+    $("iCan").onclick = abrirMedicao;
+    $("iOk").onclick = () => {
+      const hoje = new Date().toISOString().slice(0, 10);
+      const mk = (x, n) => { const it = { n, grupo: x.grupo || "", desc: x.desc, un: x.un, fator: 1, cod: x.cod || "" }; if (x.atv) it.atv = x.atv; else it.manual = true; if (x.un !== "cs" && x.qtd != null) it.qtd = x.qtd; return it; };
+      const imp = (S.escImp = S.escImp || []);
+      if (base) {
+        let n = Math.max(0, ...base.itens.map(i => +i.n || 0));
+        L.forEach(x => { if (x.velho) { const i = x.velho; if (x.atv !== (i.atv || null)) { if (x.atv) { i.atv = x.atv; delete i.manual; } else { delete i.atv; i.manual = true; } }
+            if (i.un !== "cs" && x.qtd != null && +i.qtd !== +x.qtd) { (i.hist = i.hist || []).push({ data: hoje, arquivo: c.arquivo, qtdAnt: i.qtd ?? null }); i.qtd = x.qtd; } }
+          else base.itens.push(Object.assign(mk(x, ++n), { hist: [{ data: hoje, arquivo: c.arquivo, novo: true }] })); });
+        const cs = L.filter(x => x.un === "cs" && x.qtd).map(x => x.qtd); const mx = cs.length ? Math.max(...cs) : 0;
+        (base.aditivos = base.aditivos || []).push({ data: hoje, arquivo: c.arquivo, casas: mx || null });
+        if (mx) prestDe(base.id).forEach(p => { if (p.ativo !== false && N(p.casas) !== mx && prestDe(base.id).length === 1) p.casas = mx; });
+        save(); toast("Aditivo aplicado"); abrirMedicao(); return;
+      }
+      const desc = $("iEsc").value.trim() || "Contrato", nome = $("iPr").value.trim() || "A DEFINIR";
+      const es = { id: "imp" + Date.now().toString(36), descricao: desc + (nome !== "A DEFINIR" ? " · " + nome : ""), importado: { arquivo: c.arquivo, data: hoje, obra: c.obra }, itens: L.map((x, k) => mk(x, k + 1)) };
+      imp.push(es); ESC.push(es);
+      const cs = L.filter(x => x.un === "cs" && x.qtd).map(x => x.qtd), casas = cs.length ? Math.max(...cs) : LOTS.length;
+      const qs = quadras(); let sel = qs.map(x => x.q);
+      (P()[es.id] = []).push({ id: "p" + Date.now().toString(36), nome, contrato: $("iCt").value.trim(), quadras: sel, casas: Math.min(casas, LOTS.length) || casas, ativo: true });
+      save(); toast(`Contrato importado: ${es.itens.length} itens. Confira as quadras do prestador em Editar.`); abrirMedicao();
+    };
+  }
+  window.Medicao = { abrir: abrirMedicao, aposMarcar, aoDesmarcar, fornecedores, carregar: escopos, _calcular: calcular, _boletim: boletim, _MED: () => MED, _ler: f => lerPlanilhaContrato(f), _sug: sugerir };
   setTimeout(() => { if (typeof LOTS !== "undefined" && LOTS.length) escopos(); }, 1500);
 })();
