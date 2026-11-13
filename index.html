@@ -98,7 +98,33 @@ label.f input,label.f select,label.f textarea{font:15px var(--f-body);padding:8p
 .ed small{color:var(--muted);font-size:12px}
 .ed .acts button{border:0;background:none;color:var(--blue);font-weight:600;cursor:pointer;padding:6px}
 img.preview{width:100%;border:1px solid var(--line);border-radius:6px}
+
+#capa{position:fixed;inset:0;z-index:50;background:var(--bg);overflow:auto;padding-block:calc(18px + env(safe-area-inset-top,0px)) 24px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+#capa .cw{max-width:720px;margin:0 auto;display:flex;flex-direction:column;gap:14px}
+#capa .cl{display:flex;align-items:center;gap:10px}#capa .cl img{height:34px;background:#fff;border-radius:6px;padding:3px 6px}
+#capa .hero{background:linear-gradient(135deg,#013244 0%,#0e5a80 100%);color:#fff;border-radius:16px;padding:18px 20px 0;overflow:hidden}
+#capa .hTop{font-size:12px;letter-spacing:1.2px;text-transform:uppercase;color:#bcd3df}
+#capa .hNome{font:700 26px var(--f-display);margin:4px 0 12px}
+#capa .hNums{display:flex;gap:22px;flex-wrap:wrap;padding-bottom:16px}#capa .hNums b{font:700 24px var(--f-display);display:block;line-height:1.1}#capa .hNums div:first-child b{color:#f8b706}#capa .hNums small{color:#bcd3df;font-size:12px}
+#capa .hBar{display:flex;height:5px;margin:0 -20px}#capa .hBar i:first-child{flex:3;background:#f8b706}#capa .hBar i:last-child{flex:7;background:#df062f}
+#capa h2{font:600 14px var(--f-display);letter-spacing:1.4px;text-transform:uppercase;color:var(--muted);margin:8px 0 0}
+#capa .tiles{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:12px}
+#capa .tile{position:relative;overflow:hidden;background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:18px 16px 18px 20px;text-align:left;cursor:pointer;color:var(--ink);font:inherit;display:flex;gap:14px;align-items:center}
+#capa .tile::before{content:"";position:absolute;left:0;top:0;bottom:0;width:5px;background:#0e5a80}#capa .tHab::before{background:#f8b706}
+#capa .ic{width:52px;height:52px;border-radius:12px;display:grid;place-items:center;background:#013244;color:#fff;flex:none}#capa .tHab .ic{background:#fde9b3;color:#013244}#capa .ic svg{width:32px;height:32px}
+#capa .tile b{font:700 20px var(--f-display);display:block}#capa .tile small{color:var(--muted)}#capa .go{margin-left:auto;font:600 30px var(--f-display);color:#0e5a80}
 </style></head><body>
+
+<div id="capa" hidden><div class="cw">
+  <div class="cl"><img src="logo.png" alt="Pacaembu Construtora"></div>
+  <div class="hero"><div class="hTop">Residencial Bem Viver</div><div class="hNome">Paranavaí · Fase 1</div>
+    <div class="hNums"><div><b>686</b><small>casas</small></div><div><b>497</b><small>Módulo 1</small></div><div><b>189</b><small>Módulo 2</small></div></div><div class="hBar"><i></i><i></i></div></div>
+  <h2>O que você vai levantar?</h2>
+  <div class="tiles">
+    <button class="tile tHab" id="cHab"><span class="ic"><svg viewBox="0 0 48 48" aria-hidden="true"><path d="M8 22 24 9l16 13" fill="none" stroke="currentColor" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round"/><path d="M12 20v18h24V20" fill="none" stroke="currentColor" stroke-width="3.2" stroke-linejoin="round"/><rect x="20.5" y="27" width="7" height="11" rx="1" fill="currentColor"/></svg></span><span><b>Habitação</b><small>Casas por serviço, efetivo e medição</small></span><span class="go">›</span></button>
+    <button class="tile" id="cInf"><span class="ic"><svg viewBox="0 0 48 48" aria-hidden="true"><path d="M6 34h36M6 18h36" stroke="currentColor" stroke-width="3.2" stroke-linecap="round"/><path d="M6 26h36" stroke="#f8b706" stroke-width="3" stroke-linecap="round" stroke-dasharray="5 4"/></svg></span><span><b>Infra</b><small>Pavimento · drenagem, esgoto e água em breve</small></span><span class="go">›</span></button>
+  </div>
+</div></div>
 
 <header>
   <div class="l1">
@@ -581,6 +607,12 @@ function abrirBackup(){
   if("serviceWorker" in navigator&&location.protocol==="https:"&&!/claude\.ai|claudeusercontent/.test(location.host))
     navigator.serviceWorker.register("sw.js").catch(()=>{});
 })();
+</script>
+<script>
+(function(){const c=document.getElementById("capa");if(location.hash!=="#hab")c.hidden=false;
+document.getElementById("cHab").onclick=()=>{c.hidden=true;history.replaceState(null,"","#hab");setTimeout(()=>dispatchEvent(new Event("resize")),50)};
+document.getElementById("cInf").onclick=()=>{location.href="infra.html"};
+const m=document.querySelector("header .marca img");if(m){m.style.cursor="pointer";m.title="Voltar à capa";m.onclick=()=>{c.hidden=false;history.replaceState(null,"",location.pathname)}}})();
 </script>
 <script src="medicao.js"></script>
 <script src="efetivo.js"></script>
