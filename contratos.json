@@ -1,5 +1,5 @@
 {
- "versao": 2,
+ "versao": 4,
  "escopos": [
   {
    "id": "hidro",
@@ -129,7 +129,8 @@
      "un": "cs",
      "fator": 1,
      "cod": 52489,
-     "atv": 81
+     "atv": null,
+     "manual": true
     },
     {
      "n": 15,
@@ -264,7 +265,8 @@
      "un": "cs",
      "fator": 1,
      "cod": 52489,
-     "atv": 68
+     "atv": null,
+     "manual": true
     },
     {
      "n": 30,
@@ -327,7 +329,8 @@
      "un": "cs",
      "fator": 1,
      "cod": 52489,
-     "atv": 63
+     "atv": null,
+     "manual": true
     },
     {
      "n": 37,
@@ -410,7 +413,7 @@
     {
      "n": 5,
      "grupo": "Calçada em Concreto (Passeios)",
-     "desc": "M.O. Execução de Calçadas em Concreto (Incluso - Acerto de Terreno, Formas, Concretagem, Acabamento e Corte de Juntas de Dilatação)",
+     "desc": "M.O. Execução de Calçadas em Concreto (Incluso - Acerto de Terreno, Formas, Concretagem, Acabamento e Corte de Juntas de Dilatação) - Fase 1",
      "un": "m²",
      "fator": 1,
      "cod": 52489,
@@ -443,6 +446,376 @@
      "fator": 1,
      "cod": 52489,
      "atv": 16
+    },
+    {
+     "n": 9,
+     "grupo": "Rampa de Concreto (Acessibilidade)",
+     "desc": "M.O. Execução de Rampa de Concreto p/ Deficiente",
+     "un": "unid",
+     "fator": 1,
+     "cod": 52489,
+     "atv": null,
+     "manual": true
+    },
+    {
+     "n": 10,
+     "grupo": "Piso Tátil",
+     "desc": "M.O. Execução de Piso Tátil (direcional e alerta fora das rampas)",
+     "un": "m²",
+     "fator": 1,
+     "cod": 52489,
+     "atv": null,
+     "manual": true
+    },
+    {
+     "n": 11,
+     "grupo": "Calçada em Concreto (Passeios) - Acesso",
+     "desc": "M.O. Execução de Calçadas em Concreto - Avenida de Acesso",
+     "un": "m²",
+     "fator": 1,
+     "cod": 52489,
+     "atv": null,
+     "manual": true
+    }
+   ]
+  },
+  {
+   "id": "alvenaria",
+   "descricao": "Alvenaria, revestimentos e esquadrias",
+   "itens": [
+    {
+     "n": 1,
+     "grupo": "Alvenaria de Blocos Cerâmicos da 1ª à 8ª Fiada",
+     "desc": "M.O. Execução de Alvenaria 1 a 8 Fiada",
+     "un": "cs",
+     "fator": 1,
+     "cod": 52489,
+     "sienge": 706,
+     "atv": 9
+    },
+    {
+     "n": 2,
+     "grupo": "Alvenaria de Blocos Cerâmicos da 1ª à 8ª Fiada",
+     "desc": "M.O. Grauteamento da Alvenaria da 1 a 8 Fiada",
+     "un": "cs",
+     "fator": 1,
+     "cod": 52489,
+     "sienge": 705,
+     "atv": 11
+    },
+    {
+     "n": 3,
+     "grupo": "Alvenaria de Blocos Cerâmicos da 9ª à 14ª Fiada",
+     "desc": "M.O. Execução de Alvenaria 9 a 14 Fiada",
+     "un": "cs",
+     "fator": 1,
+     "cod": 52489,
+     "sienge": 707,
+     "atv": 13
+    },
+    {
+     "n": 4,
+     "grupo": "Alvenaria de Blocos Cerâmicos da 9ª à 14ª Fiada",
+     "desc": "M.O. Grauteamento da Alvenaria da 9 a 14 Fiada",
+     "un": "cs",
+     "fator": 1,
+     "cod": 52489,
+     "sienge": 13689,
+     "atv": 15
+    },
+    {
+     "n": 5,
+     "grupo": "Alvenaria de Blocos Cerâmicos da 9ª à 14ª Fiada",
+     "desc": "M.O. Limpeza do Serviço de Execução e Grauteamento da Alvenaria",
+     "un": "cs",
+     "fator": 1,
+     "cod": 52489,
+     "sienge": 754,
+     "atv": 15
+    },
+    {
+     "n": 6,
+     "grupo": "Alvenaria de Blocos Cerâmicos da 9ª à 14ª Fiada",
+     "desc": "M.O. Execução da Alvenaria de Oitão e Grauteamento do Oitão",
+     "un": "cs",
+     "fator": 1,
+     "cod": 52489,
+     "sienge": 751,
+     "atv": 20
+    },
+    {
+     "n": 7,
+     "grupo": "Alvenaria de Blocos Cerâmicos da 9ª à 14ª Fiada",
+     "desc": "M.O. Limpeza de Serviço de Execução e Grauteamento do Oitão",
+     "un": "cs",
+     "fator": 1,
+     "cod": 52489,
+     "sienge": 13692,
+     "atv": 20
+    },
+    {
+     "n": 8,
+     "grupo": "Impermeabilização",
+     "desc": "M.O. Impermeabilização do Radier sob a alvenaria",
+     "un": "cs",
+     "fator": 1,
+     "cod": 52489,
+     "sienge": 13614,
+     "atv": 7
+    },
+    {
+     "n": 9,
+     "grupo": "Impermeabilização",
+     "desc": "M.O. Limpeza do Serviço de Impermeabilização do Radier Sob a Alvenaria",
+     "un": "cs",
+     "fator": 1,
+     "cod": 52489,
+     "sienge": 13704,
+     "atv": 7
+    },
+    {
+     "n": 10,
+     "grupo": "Impermeabilização",
+     "desc": "M.O. Impermeabilização Externa da Alvenaria",
+     "un": "cs",
+     "fator": 1,
+     "cod": 52489,
+     "sienge": 4685,
+     "atv": 22
+    },
+    {
+     "n": 11,
+     "grupo": "Impermeabilização",
+     "desc": "M.O. Limpeza do Serviço de Impermeabilização Externa da Alvenaria",
+     "un": "cs",
+     "fator": 1,
+     "cod": 52489,
+     "sienge": 13705,
+     "atv": 22
+    },
+    {
+     "n": 12,
+     "grupo": "Laje Maciça de Concreto Armado",
+     "desc": "M.O. Regularização da Laje no Local da Caixa d'água",
+     "un": "cs",
+     "fator": 1,
+     "cod": 52489,
+     "sienge": 13681,
+     "atv": null,
+     "manual": true
+    },
+    {
+     "n": 13,
+     "grupo": "Chapisco",
+     "desc": "M.O. Aplicação do chapisco Interno",
+     "un": "cs",
+     "fator": 1,
+     "cod": 52489,
+     "sienge": 4683,
+     "atv": 25
+    },
+    {
+     "n": 14,
+     "grupo": "Chapisco",
+     "desc": "M.O. Aplicação do Chapisco Externo",
+     "un": "cs",
+     "fator": 1,
+     "cod": 52489,
+     "sienge": 13707,
+     "atv": 25
+    },
+    {
+     "n": 15,
+     "grupo": "Chapisco",
+     "desc": "M.O. Aplicação do chapisco do Oitão",
+     "un": "cs",
+     "fator": 1,
+     "cod": 52489,
+     "sienge": 4682,
+     "atv": 25
+    },
+    {
+     "n": 16,
+     "grupo": "Chapisco",
+     "desc": "M.O. Limpeza do Serviço de Aplicação do chapisco",
+     "un": "cs",
+     "fator": 1,
+     "cod": 52489,
+     "sienge": 13708,
+     "atv": 25
+    },
+    {
+     "n": 17,
+     "grupo": "Tela na Alvenaria",
+     "desc": "M.O. Instalação de Tela externa",
+     "un": "cs",
+     "fator": 1,
+     "cod": 52489,
+     "sienge": 37382,
+     "atv": null,
+     "manual": true
+    },
+    {
+     "n": 18,
+     "grupo": "Reboco Paulista",
+     "desc": "M.O. Aplicação do reboco Interno",
+     "un": "cs",
+     "fator": 1,
+     "cod": 52489,
+     "sienge": 4684,
+     "atv": 34
+    },
+    {
+     "n": 19,
+     "grupo": "Reboco Paulista",
+     "desc": "M.O. Aplicação do reboco Externo",
+     "un": "cs",
+     "fator": 1,
+     "cod": 52489,
+     "sienge": 4686,
+     "atv": 34
+    },
+    {
+     "n": 20,
+     "grupo": "Reboco Paulista",
+     "desc": "M.O. Revisão Geral do Reboco",
+     "un": "cs",
+     "fator": 1,
+     "cod": 52489,
+     "sienge": 13709,
+     "atv": null,
+     "manual": true
+    },
+    {
+     "n": 21,
+     "grupo": "Reboco Paulista",
+     "desc": "M.O. Limpeza do Serviço de Aplicação do Reboco",
+     "un": "cs",
+     "fator": 1,
+     "cod": 52489,
+     "sienge": 4688,
+     "atv": 34
+    },
+    {
+     "n": 22,
+     "grupo": "Contramarco e pingadeira",
+     "desc": "M.O. Assentamento da Pingadeira",
+     "un": "cs",
+     "fator": 1,
+     "cod": 52489,
+     "sienge": 10407,
+     "atv": 33
+    },
+    {
+     "n": 23,
+     "grupo": "Contramarco e pingadeira",
+     "desc": "M.O. Assentamento do contramarco de portas",
+     "un": "cs",
+     "fator": 1,
+     "cod": 52489,
+     "sienge": 17673,
+     "atv": 31
+    },
+    {
+     "n": 24,
+     "grupo": "Contramarco e pingadeira",
+     "desc": "M.O. Limpeza do Serviço de Assentamento do Contramarco e Pingadeira",
+     "un": "cs",
+     "fator": 1,
+     "cod": 52489,
+     "sienge": 9945,
+     "atv": 33
+    },
+    {
+     "n": 25,
+     "grupo": "Contramarco e pingadeira",
+     "desc": "M.O. Assentamento do contramarco de Janelas",
+     "un": "cs",
+     "fator": 1,
+     "cod": 52489,
+     "sienge": 17672,
+     "atv": 31
+    },
+    {
+     "n": 26,
+     "grupo": "Portas Metálicas e Alçapão",
+     "desc": "M.O. Assentamento do Alçapão Metálico",
+     "un": "cs",
+     "fator": 1,
+     "cod": 52489,
+     "sienge": 4667,
+     "atv": 32
+    },
+    {
+     "n": 27,
+     "grupo": "Portas Metálicas e Alçapão",
+     "desc": "M.O. Assentamento das Portas Metálicas",
+     "un": "cs",
+     "fator": 1,
+     "cod": 52489,
+     "sienge": 4669,
+     "atv": 32
+    },
+    {
+     "n": 28,
+     "grupo": "Portas Metálicas e Alçapão",
+     "desc": "M.O. Limpeza do serviço de Assentamento de Portas e Portinholas Metálicas",
+     "un": "cs",
+     "fator": 1,
+     "cod": 52489,
+     "sienge": 13799,
+     "atv": 32
+    },
+    {
+     "n": 29,
+     "grupo": "Portas Metálicas e Alçapão",
+     "desc": "M.O. Assentamento das Esquadrias de Madeira (kit porta pronta)",
+     "un": "cs",
+     "fator": 1,
+     "cod": 52489,
+     "sienge": 4672,
+     "atv": 60
+    },
+    {
+     "n": 30,
+     "grupo": "Portas Metálicas e Alçapão",
+     "desc": "M.O. Limpeza do Serviço de Assentamento das esquadrias de Madeira",
+     "un": "cs",
+     "fator": 1,
+     "cod": 52489,
+     "sienge": 766,
+     "atv": 60
+    },
+    {
+     "n": 31,
+     "grupo": "Janelas",
+     "desc": "M.O. Assentamento das Janelas e Guarnições Metálicas",
+     "un": "cs",
+     "fator": 1,
+     "cod": 52489,
+     "sienge": 4671,
+     "atv": 44
+    },
+    {
+     "n": 32,
+     "grupo": "Janelas",
+     "desc": "M.O. Limpeza do Serviço de Assentamento das Janelas Metálicas",
+     "un": "cs",
+     "fator": 1,
+     "cod": 52489,
+     "sienge": 4670,
+     "atv": 44
+    },
+    {
+     "n": 33,
+     "grupo": "Janelas",
+     "desc": "M.O. Revisão Geral de Esquadrias Metálicas",
+     "un": "cs",
+     "fator": 1,
+     "cod": 52489,
+     "sienge": 13630,
+     "atv": null,
+     "manual": true
     }
    ]
   }

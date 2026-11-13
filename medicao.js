@@ -26,11 +26,13 @@
   // prestadores por escopo (em S, para ir junto com o celular)
   const P = () => (S.prest = S.prest || {});
   const Q = () => (S.quem = S.quem || {});
-  function migra() { // primeira vez: a KVC vira prestador do escopo hidrossanitário, com todas as quadras
+  function migra() { // primeira vez: nenhum prestador vem cadastrado (app modelo); cada obra vincula os seus.
     if (S.prest) return;
-    const qs = quadras().map(x => x.q);
-    S.prest = { hidro: [{ id: "kvc", nome: "KVC DA SILVA CONSTRUÇÕES", contrato: "", quadras: qs, casas: LOTS.length, ativo: true }] };
-    if (MED.medicoes["kvc-hidro"] && !MED.medicoes["hidro:kvc"]) { MED.medicoes["hidro:kvc"] = MED.medicoes["kvc-hidro"]; delete MED.medicoes["kvc-hidro"]; sv(); }
+    S.prest = {};
+    if (MED.medicoes["kvc-hidro"] && !MED.medicoes["hidro:kvc"]) { // medições antigas (versão 1): mantém o histórico
+      S.prest.hidro = [{ id: "kvc", nome: "A DEFINIR", contrato: "", quadras: quadras().map(x => x.q), casas: LOTS.length, ativo: true }];
+      MED.medicoes["hidro:kvc"] = MED.medicoes["kvc-hidro"]; delete MED.medicoes["kvc-hidro"]; sv();
+    }
     save();
   }
   const quadras = () => { const m = {}; LOTS.forEach(l => (m[l.q] = (m[l.q] || 0) + 1)); return Object.keys(m).sort().map(q => ({ q, n: m[q] })); };
@@ -71,11 +73,11 @@
       A[a] = { num: a, nome: s ? s.nome : "Atividade " + a + " (não existe no app)", existe: !!s, exec: e.n, sem: e.sem, prev: p };
     }
     const itens = es.itens.map(i => {
-      const a = i.atv ? A[i.atv] : null, f = i.fator || 1, semCota = i.un !== "cs", qtd = semCota ? null : cont * f;
+      const a = i.atv ? A[i.atv] : null, f = i.fator || 1, semCota = i.un !== "cs", qtd = semCota ? (i.qtd != null ? +i.qtd : null) : cont * f; // itens fora de "cs": quantidade do projeto (contratos.json), se houver
       const ja = hist.reduce((t, m) => t + ((m.itens[i.n] || {}).q || 0), 0);
       if (i.manual || !a) { // lançamento manual: digita a quantidade do mês
         const v = Math.max(0, +(manual[i.n] || 0) || 0), q = qtd == null ? v : Math.min(v, Math.max(0, qtd - ja));
-        return { ...i, qtd, ja, exec: null, prev: null, q, saldo: qtd == null ? null : qtd - ja - q, devendo: 0, manual: true };
+        return { ...i, qtd, ja: Math.round(ja * 100) / 100, exec: null, prev: null, q, saldo: qtd == null ? null : Math.round((qtd - ja - q) * 100) / 100, devendo: 0, manual: true };
       }
       const exec = a.exec * f, pv = prevItem[i.n] != null ? Math.max(0, N(prevItem[i.n])) : a.prev * f;
       const q = Math.max(0, Math.min(qtd, exec + pv) - ja);
@@ -132,7 +134,7 @@
     const nomes = [...new Set([...(S.efCad?.empresas || []), ...Object.values(P()).flat().map(x => x.nome)])];
     const qs = quadras();
     openSheet(pid ? "Editar prestador" : "Vincular prestador", `<p class="msg">${esc(es.descricao)}</p>
-      <label class="f">Prestador (razão social)<input id="pNome" list="pNomes" value="${esc(p.nome)}"><datalist id="pNomes">${nomes.map(n => `<option value="${esc(n)}">`).join("")}</datalist></label>
+      <label class="f">Prestador (razão social; em branco = A DEFINIR)<input id="pNome" list="pNomes" placeholder="A DEFINIR" value="${esc(p.nome === "A DEFINIR" ? "" : p.nome)}"><datalist id="pNomes">${nomes.map(n => `<option value="${esc(n)}">`).join("")}</datalist></label>
       <label class="f">Nº do contrato (opcional)<input id="pCt" value="${esc(p.contrato)}"></label>
       <div class="grp">Quadras deste prestador</div>
       <div class="row"><button class="btn" id="pTodas" style="flex:0 0 auto">Todas</button><button class="btn" id="pNenhuma" style="flex:0 0 auto">Nenhuma</button></div>
@@ -156,10 +158,9 @@
     $("pNenhuma").onclick = () => { sel = new Set(); desenha(); };
     $("pCan").onclick = abrirMedicao;
     $("pOk").onclick = () => {
-      const nome = $("pNome").value.trim(), err = t => { $("pErr").textContent = t; $("pErr").hidden = false; };
-      if (!nome) return err("Informe o prestador.");
+      const nome = $("pNome").value.trim() || "A DEFINIR", err = t => { $("pErr").textContent = t; $("pErr").hidden = false; };
       if (!sel.size) return err("Escolha ao menos uma quadra.");
-      if (lista.some(x => x.id !== p.id && x.nome.toLowerCase() === nome.toLowerCase())) return err("Esse prestador já está vinculado a este escopo.");
+      if (nome !== "A DEFINIR" && lista.some(x => x.id !== p.id && x.nome.toLowerCase() === nome.toLowerCase())) return err("Esse prestador já está vinculado a este escopo.");
       Object.assign(p, { nome, contrato: $("pCt").value.trim(), quadras: [...sel].sort(), casas: N($("pCasas").value), ativo: $("pAt").checked });
       if (!pid) lista.push(p);
       save(); toast("Prestador salvo"); abrirMedicao();
@@ -292,12 +293,12 @@
     add(hdr);
     let grp = null;
     for (const i0 of es.itens) {
-      const i = { ...i0, qtd: i0.un !== "cs" ? "" : casas * (i0.fator || 1) };
+      const i = { ...i0, qtd: i0.un !== "cs" ? (i0.qtd != null ? +i0.qtd : "") : casas * (i0.fator || 1) };
       if (i.grupo !== grp) { grp = i.grupo; const r = [{ v: "", s: 5 }, { v: grp, s: 5 }]; for (let k = 2; k < nCol; k++) r.push({ v: "", s: 5 }); add(r); }
       const qs = h.map(m => (m.itens[i.n] || {}).q || 0), tot = qs.reduce((a, b) => a + b, 0);
       const r = [{ v: i.cod, s: 4 }, { v: i.desc, s: 3 }, { v: i.un, s: 4 }, { v: i.qtd, s: 4 }];
       qs.forEach((q, k) => r.push({ v: q || 0, s: k === qs.length - 1 ? 6 : 4 }));
-      r.push({ v: tot, s: 4 }, { v: i.qtd === "" ? "" : i.qtd - tot, s: 4 });
+      r.push({ v: tot, s: 4 }, { v: i.qtd === "" ? "" : Math.round((i.qtd - tot) * 100) / 100, s: 4 });
       add(r);
     }
     add([]);

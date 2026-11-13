@@ -333,16 +333,19 @@ function abrirServicos(){
 $("btnSvc").onclick=abrirServicos;
 
 // ---------- resumo (mesma lógica da CAPA) ----------
+const M2Q=new Set(["Q17","Q18","Q19","Q21","Q22","Q37","Q38","Q41"]); // Módulo 2 (189 casas); demais quadras = Módulo 1 (497)
 function uteis(a,b){let n=0;const d=new Date(a+"T12:00");const e=new Date(b+"T12:00");while(d<=e){const w=d.getDay();if(w&&w<6)n++;d.setDate(d.getDate()+1)}return n}
 function calc(d){
   // mês de produção: do dia 26 ao dia 25
   const dd=new Date(d+"T12:00"),y=dd.getFullYear(),m=dd.getMonth(),dia_=dd.getDate();const iso=x=>{x.setMinutes(x.getMinutes()-x.getTimezoneOffset());return x.toISOString().slice(0,10)};
   const ini=iso(dia_>25?new Date(y,m,26,12):new Date(y,m-1,26,12)),fimS=iso(dia_>25?new Date(y,m+1,25,12):new Date(y,m,25,12));
   const tot=LOTS.length, du=Math.max(1,uteis(ini,d));
-  const linhas=ativos().map(s=>{const v=Object.values(marksOf(s.id));const acum=v.length;
-    const mes=v.filter(x=>x>=ini&&x<=fimS).length;return{s,dia:v.filter(x=>x===d).length,acum,pct:tot?acum/tot:0,mes,falta:tot-acum,media:Math.round(mes/du*10)/10}});
+  const T2=LOTS.filter(l=>M2Q.has(l.q)).length,T1=tot-T2;
+  const linhas=ativos().map(s=>{const mk=marksOf(s.id),ks=Object.keys(mk),v=Object.values(mk);const acum=v.length;
+    const m2=ks.filter(k=>M2Q.has(k.slice(0,3))).length,m1=acum-m2;
+    const mes=v.filter(x=>x>=ini&&x<=fimS).length;return{s,dia:v.filter(x=>x===d).length,acum,pct:tot?acum/tot:0,m1,m2,p1:T1?m1/T1:0,p2:T2?m2/T2:0,mes,falta:tot-acum,media:Math.round(mes/du*10)/10}});
   linhas.forEach(L=>{const a=antNums(L.s).map(n=>linhas.find(x=>x.s.num===n)).filter(Boolean);L.frente=a.length?Math.max(0,Math.min(...a.map(x=>x.acum))-L.acum):null});
-  return{linhas,tot,ini,fimS,uteisMes:uteis(ini,fimS),restantes:Math.max(0,uteis(d,fimS)-1)};
+  return{linhas,tot,T1,T2,ini,fimS,uteisMes:uteis(ini,fimS),restantes:Math.max(0,uteis(d,fimS)-1)};
 }
 function abrirResumo(){
   const d=dia(),C=calc(d);
@@ -351,8 +354,8 @@ function abrirResumo(){
   openSheet(`Resumo · ${fmt(d)}`,`
   <div class="kpis"><div class="kpi"><b>${and.length}</b><span>serviços em andamento</span></div><div class="kpi"><b>${comProd}</b><span>com produção no dia</span></div><div class="kpi"><b>${C.restantes}</b><span>dias úteis restantes</span></div></div>
   ${parados.length?`<p class="msg alerta"><b>${parados.length}</b> em andamento sem produção hoje: ${parados.map(l=>esc(l.s.nome)).join(", ")}.</p>`:""}
-  <div class="scroll"><table class="res"><thead><tr><th>Nº</th><th>Serviço</th><th>Dia</th><th>Acum.</th><th>%</th><th>Mês</th><th>A realizar</th><th>Frentes</th><th>Média</th></tr></thead><tbody>
-  ${C.linhas.map(l=>`<tr class="${cls(l)}"><td>${l.s.num}</td><td>${esc(l.s.nome)}</td><td>${l.dia||"-"}</td><td>${l.acum}</td><td>${(l.pct*100).toFixed(1)}%</td><td>${l.mes}</td><td>${l.falta}</td><td>${l.frente??"-"}</td><td>${l.media}</td></tr>`).join("")}
+  <div class="scroll"><table class="res"><thead><tr><th>Nº</th><th>Serviço</th><th>Dia</th><th>Total</th><th>%</th><th>Mód. 1</th><th>%</th><th>Mód. 2</th><th>%</th><th>A realizar</th><th>Frentes</th><th>Mês</th><th>Média</th></tr></thead><tbody>
+  ${C.linhas.map(l=>`<tr class="${cls(l)}"><td>${l.s.num}</td><td>${esc(l.s.nome)}</td><td>${l.dia||"-"}</td><td>${l.acum}</td><td>${(l.pct*100).toFixed(1)}%</td><td>${l.m1}</td><td>${(l.p1*100).toFixed(1)}%</td><td>${l.m2}</td><td>${(l.p2*100).toFixed(1)}%</td><td>${l.falta}</td><td>${l.frente??"-"}</td><td>${l.mes}</td><td>${l.media}</td></tr>`).join("")}
   </tbody></table></div>
   <p class="msg"><span class="sw hoje"></span> produção no dia &nbsp; <span class="sw parado"></span> em andamento sem produção</p>`);
 }
@@ -365,7 +368,7 @@ function imagemCapa(d){
   const C=calc(d);const rows=C.linhas.filter(l=>l.acum>0&&l.acum<C.tot);
   const concl=C.linhas.filter(l=>l.acum>=C.tot).length, naoIni=C.linhas.filter(l=>!l.acum).length;
   const sc=2, F="Calibri, Carlito, 'Segoe UI', Arial, sans-serif";
-  const cols=[["Nº",34],["SERVIÇOS",220],["REALIZADO\nNO DIA",78],["ACUMULADO\n(casas)",78],["%\nEXECUTADO",112],["ACUMULADO\nMÊS",76],["A\nREALIZAR",70],["FRENTES\nLIBERADAS",76],["MÉDIA\nNO MÊS",66]];
+  const cols=[["Nº",30],["SERVIÇOS",210],["REALIZADO\nDIA",64],["TOTAL\n(casas)",62],["%\nTOTAL",112],["MÓDULO 1\n(casas)",66],["%\nMÓD. 1",52],["MÓDULO 2\n(casas)",66],["%\nMÓD. 2",52],["À\nREALIZAR",62],["FRENTE",58],["MÉDIA\nNO MÊS",58]];
   const M=16, Wt=cols.reduce((a,c)=>a+c[1],0), Wd=Wt+M*2, rh=22, hh=34, yT=M, yI=yT+40, yH=yI+56;
   const Hd=yH+hh+Math.max(1,rows.length)*rh+44;
   const cv=document.createElement("canvas");cv.width=Wd*sc;cv.height=Hd*sc;const g=cv.getContext("2d");g.scale(sc,sc);g.textBaseline="middle";
@@ -378,7 +381,7 @@ function imagemCapa(d){
   g.fillStyle="#fff";g.textAlign="center";g.font=`700 17px ${F}`;
   g.fillText("CONTROLE DE PRODUÇÃO DIÁRIA  ·  PARANAVAÍ  ·  FASE 1",xT+wT/2,yT+15);
   // informações
-  const info=[["Data do levantamento",fmt(d),true],["Total de casas",C.tot],["Dias úteis no mês (26 a 25)",C.uteisMes],["Dias úteis restantes",C.restantes]];
+  const info=[["Data do levantamento",fmt(d),true],["Total de casas",C.tot],["Módulo 1",C.T1+" casas"],["Módulo 2",C.T2+" casas"]];
   const iw=Wt/info.length;
   info.forEach(([k,v,dest],i)=>{const x=M+i*iw;
     g.fillStyle="#595959";g.font=`700 10px ${F}`;g.textAlign="left";g.fillText(k.toUpperCase(),x+4,yI+12);
@@ -392,7 +395,7 @@ function imagemCapa(d){
   if(!rows.length){g.fillStyle="#595959";g.font=`italic 12px ${F}`;g.textAlign="center";g.fillText("Nenhum serviço em andamento nesta data.",M+Wt/2,yH+hh+rh/2)}
   rows.forEach((l,i)=>{const y=yH+hh+i*rh;x=M;
     g.fillStyle=i%2?"#F3F6FB":"#fff";g.fillRect(M,y,Wt,rh);
-    const v=[l.s.num,l.s.nome,l.dia||"-",l.acum,null,l.mes,l.falta,l.frente??"-",l.media];
+    const v=[l.s.num,l.s.nome,l.dia||"-",l.acum,null,l.m1,(l.p1*100).toFixed(1)+"%",l.m2,(l.p2*100).toFixed(1)+"%",l.falta,l.frente??"-",l.media];
     cols.forEach(([t,w],j)=>{
       if(j===2&&l.dia){g.fillStyle="#C6E0B4";g.fillRect(x+1,y+1,w-2,rh-2)}
       if(j===4){const bw=w-48,p=Math.min(1,l.pct);g.fillStyle="#DDE5F2";g.fillRect(x+6,y+8,bw,rh-16);g.fillStyle="#0E5A80";g.fillRect(x+6,y+8,bw*p,rh-16);
